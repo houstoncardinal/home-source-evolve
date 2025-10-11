@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Menu, Search, ShoppingCart, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useCart } from "@/contexts/CartContext";
 
 const navigation = [
   { name: "Living Rooms", href: "#living" },
@@ -13,22 +16,23 @@ const navigation = [
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { totalItems } = useCart();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border" role="banner">
       {/* Promo Banner */}
-      <div className="bg-primary text-primary-foreground text-center py-2 text-sm font-medium">
+      <div className="bg-primary text-primary-foreground text-center py-2 text-sm font-medium" role="alert">
         Buy More/Save More Sale - Up to 30% Off*
       </div>
 
       {/* Main Navigation */}
       <div className="container mx-auto px-4">
-        <nav className="flex items-center justify-between py-4">
+        <nav className="flex items-center justify-between py-4" role="navigation" aria-label="Main navigation">
           {/* Logo */}
           <div className="flex-1 lg:flex-none">
-            <a href="/" className="text-2xl font-bold tracking-tight">
+            <Link to="/" className="text-2xl font-bold tracking-tight" aria-label="Curated Home Source - Home">
               Curated Home Source
-            </a>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -46,12 +50,19 @@ export const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-4 flex-1 justify-end">
-            <Button variant="ghost" size="icon" className="hover:bg-accent/10">
-              <Search className="h-5 w-5" />
+            <Button variant="ghost" size="icon" className="hover:bg-accent/10" aria-label="Search products">
+              <Search className="h-5 w-5" aria-hidden="true" />
             </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-accent/10">
-              <ShoppingCart className="h-5 w-5" />
-            </Button>
+            <Link to="/cart" aria-label={`Shopping cart with ${totalItems} items`}>
+              <Button variant="ghost" size="icon" className="hover:bg-accent/10 relative">
+                <ShoppingCart className="h-5 w-5" aria-hidden="true" />
+                {totalItems > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-accent text-accent-foreground" aria-label={`${totalItems} items`}>
+                    {totalItems}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               size="icon"

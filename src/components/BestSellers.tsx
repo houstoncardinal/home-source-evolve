@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useCart } from "@/contexts/CartContext";
 
 const products = [
   {
@@ -30,12 +32,14 @@ const products = [
 ];
 
 export const BestSellers = () => {
+  const { addItem } = useCart();
+  
   return (
-    <section className="py-24 bg-background">
+    <section className="py-24 bg-background" aria-labelledby="bestsellers-heading">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">Best Sellers</h2>
+          <h2 id="bestsellers-heading" className="text-4xl md:text-5xl font-bold mb-4">Best Sellers</h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Our most loved pieces, chosen by customers like you
           </p>
@@ -49,22 +53,26 @@ export const BestSellers = () => {
               className="group overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-500 animate-fade-up"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              {/* Image Container */}
-              <div className="relative h-72 overflow-hidden bg-muted">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
-                />
-                <Badge className="absolute top-4 right-4 bg-accent text-accent-foreground font-semibold">
-                  {product.badge}
-                </Badge>
-              </div>
+              <Link to={`/product/${product.id}`} aria-label={`View details for ${product.name}`}>
+                {/* Image Container */}
+                <div className="relative h-72 overflow-hidden bg-muted">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                  />
+                  <Badge className="absolute top-4 right-4 bg-accent text-accent-foreground font-semibold">
+                    {product.badge}
+                  </Badge>
+                </div>
+              </Link>
 
               <CardContent className="p-6">
-                <h3 className="text-xl font-semibold mb-2 group-hover:text-accent transition-colors duration-300">
-                  {product.name}
-                </h3>
+                <Link to={`/product/${product.id}`}>
+                  <h3 className="text-xl font-semibold mb-2 group-hover:text-accent transition-colors duration-300">
+                    {product.name}
+                  </h3>
+                </Link>
                 <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                   {product.description}
                 </p>
@@ -77,7 +85,9 @@ export const BestSellers = () => {
                   </div>
                   <Button
                     size="sm"
+                    onClick={() => addItem(product)}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+                    aria-label={`Add ${product.name} to cart`}
                   >
                     Add to Cart
                   </Button>
@@ -89,13 +99,15 @@ export const BestSellers = () => {
 
         {/* View All Button */}
         <div className="text-center mt-12">
-          <Button
-            size="lg"
-            variant="outline"
-            className="border-2 border-primary hover:bg-primary hover:text-primary-foreground px-8 py-6 text-lg font-semibold transition-all duration-300"
-          >
-            View All Products
-          </Button>
+          <Link to="/products">
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-2 border-primary hover:bg-primary hover:text-primary-foreground px-8 py-6 text-lg font-semibold transition-all duration-300"
+            >
+              View All Products
+            </Button>
+          </Link>
         </div>
       </div>
     </section>
