@@ -6,7 +6,7 @@ import { useCart } from "@/contexts/CartContext";
 
 const products = [
   {
-    id: 1,
+    id: "1",
     name: "3-Piece Aluminum Patio Set",
     description: "All-weather patio furniture with 6.7\" thick Olefin fabric cushions and coffee table",
     price: 825.49,
@@ -14,7 +14,7 @@ const products = [
     badge: "Best Seller",
   },
   {
-    id: 2,
+    id: "2",
     name: "EVA 180 TV Stand",
     description: "Modern entertainment center in black matt and gloss finish, 70.87 inches",
     price: 549.99,
@@ -22,7 +22,7 @@ const products = [
     badge: "Trending",
   },
   {
-    id: 3,
+    id: "3",
     name: "8-Seater Dining Table",
     description: "Formal traditional design with self-storing leaf, cherry finish wooden furniture",
     price: 981.37,

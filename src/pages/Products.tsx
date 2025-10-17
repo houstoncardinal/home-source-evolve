@@ -9,17 +9,9 @@ import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
 
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  compare_at_price: number | null;
-  category: string;
-  badge: string | null;
-  in_stock: boolean;
+type Product = Database["public"]["Tables"]["products"]["Row"] & {
   primary_image?: string;
   image_alt?: string;
 };
@@ -84,8 +76,7 @@ export default function Products() {
     addItem({
       id: product.id,
       name: product.name,
-      price: Number(product.price),
-      quantity: 1,
+      price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
       image: product.primary_image || "/placeholder.svg",
     });
     toast.success(`${product.name} added to cart`);
@@ -146,7 +137,7 @@ export default function Products() {
                       )}
                       {product.compare_at_price && (
                         <Badge variant="secondary" className="absolute top-4 left-4 bg-destructive text-white shadow-lg">
-                          Save ${(product.compare_at_price - product.price).toFixed(0)}
+                          Save ${((typeof product.compare_at_price === 'string' ? parseFloat(product.compare_at_price) : product.compare_at_price) - (typeof product.price === 'string' ? parseFloat(product.price) : product.price)).toFixed(0)}
                         </Badge>
                       )}
                     </div>
@@ -165,11 +156,11 @@ export default function Products() {
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl font-bold text-accent">
-                          ${product.price.toFixed(2)}
+                          ${(typeof product.price === 'string' ? parseFloat(product.price) : product.price).toFixed(2)}
                         </span>
                         {product.compare_at_price && (
                           <span className="text-sm text-muted-foreground line-through">
-                            ${product.compare_at_price.toFixed(2)}
+                            ${(typeof product.compare_at_price === 'string' ? parseFloat(product.compare_at_price) : product.compare_at_price).toFixed(2)}
                           </span>
                         )}
                       </div>

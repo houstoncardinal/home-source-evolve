@@ -10,55 +10,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Minus, Plus, Check, Loader2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { Database } from "@/integrations/supabase/types";
 
-type Product = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  long_description: string | null;
-  price: number;
-  compare_at_price: number | null;
-  category: string;
-  badge: string | null;
-  brand: string | null;
-  dimensions: any;
-  care_instructions: string | null;
-};
+type Product = Database["public"]["Tables"]["products"]["Row"];
+type ProductImage = Pick<Database["public"]["Tables"]["product_images"]["Row"], "url" | "alt_text">;
+type ProductColor = Database["public"]["Tables"]["product_colors"]["Row"];
+type ProductTexture = Database["public"]["Tables"]["product_textures"]["Row"];
+type ProductVariation = Database["public"]["Tables"]["product_variations"]["Row"];
+type ProductFeature = Pick<Database["public"]["Tables"]["product_features"]["Row"], "feature">;
 
-type ProductImage = {
-  url: string;
-  alt_text: string | null;
-};
-
-type ProductColor = {
-  id: string;
-  name: string;
-  hex_code: string;
-  image_url: string | null;
-  price_adjustment: number;
-  in_stock: boolean;
-};
-
-type ProductTexture = {
-  id: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-  price_adjustment: number;
-  in_stock: boolean;
-};
-
-type ProductVariation = {
-  id: string;
-  variation_type: string;
-  value: string;
-  price_adjustment: number;
-  in_stock: boolean;
-};
-
-type ProductFeature = {
-  feature: string;
+type Dimensions = {
+  width?: string;
+  height?: string;
+  depth?: string;
 };
 
 export default function ProductDetail() {
@@ -156,23 +120,33 @@ export default function ProductDetail() {
     }
   };
 
-  const calculatePrice = () => {
+  const calculatePrice = (): number => {
     if (!product) return 0;
-    let finalPrice = Number(product.price);
+    const basePrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+    let finalPrice = basePrice;
 
     if (selectedColor) {
       const color = colors.find((c) => c.id === selectedColor);
-      if (color) finalPrice += Number(color.price_adjustment);
+      if (color) {
+        const adj = typeof color.price_adjustment === 'string' ? parseFloat(color.price_adjustment) : color.price_adjustment;
+        finalPrice += adj;
+      }
     }
 
     if (selectedTexture) {
       const texture = textures.find((t) => t.id === selectedTexture);
-      if (texture) finalPrice += Number(texture.price_adjustment);
+      if (texture) {
+        const adj = typeof texture.price_adjustment === 'string' ? parseFloat(texture.price_adjustment) : texture.price_adjustment;
+        finalPrice += adj;
+      }
     }
 
     if (selectedVariation) {
       const variation = variations.find((v) => v.id === selectedVariation);
-      if (variation) finalPrice += Number(variation.price_adjustment);
+      if (variation) {
+        const adj = typeof variation.price_adjustment === 'string' ? parseFloat(variation.price_adjustment) : variation.price_adjustment;
+        finalPrice += adj;
+      }
     }
 
     return finalPrice;
@@ -195,9 +169,8 @@ export default function ProductDetail() {
       id: `${product.id}-${selectedColor}-${selectedTexture}-${selectedVariation}`,
       name: itemName,
       price: finalPrice,
-      quantity: quantity,
       image: images[0]?.url || "/placeholder.svg",
-    });
+    }, quantity);
 
     toast.success(`${itemName} added to cart`);
   };
@@ -477,22 +450,22 @@ export default function ProductDetail() {
                     <div>
                       <h3 className="text-xl font-bold mb-3 text-foreground">Dimensions</h3>
                       <div className="grid grid-cols-3 gap-4 text-muted-foreground">
-                        {product.dimensions.width && (
+                        {(product.dimensions as Dimensions).width && (
                           <div>
                             <div className="text-sm text-muted-foreground/70">Width</div>
-                            <div className="font-semibold">{product.dimensions.width}</div>
+                            <div className="font-semibold">{(product.dimensions as Dimensions).width}</div>
                           </div>
                         )}
-                        {product.dimensions.depth && (
+                        {(product.dimensions as Dimensions).depth && (
                           <div>
                             <div className="text-sm text-muted-foreground/70">Depth</div>
-                            <div className="font-semibold">{product.dimensions.depth}</div>
+                            <div className="font-semibold">{(product.dimensions as Dimensions).depth}</div>
                           </div>
                         )}
-                        {product.dimensions.height && (
+                        {(product.dimensions as Dimensions).height && (
                           <div>
                             <div className="text-sm text-muted-foreground/70">Height</div>
-                            <div className="font-semibold">{product.dimensions.height}</div>
+                            <div className="font-semibold">{(product.dimensions as Dimensions).height}</div>
                           </div>
                         )}
                       </div>
