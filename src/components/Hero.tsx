@@ -2,17 +2,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-living-room.jpg";
-
 export const Hero = () => {
-  return (
-    <section className="relative h-screen min-h-[600px] flex items-center overflow-hidden" aria-label="Hero section">
+  return <section className="relative h-screen min-h-[600px] flex items-center overflow-hidden" aria-label="Hero section">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt="Luxury modern living room with sophisticated furniture"
-          className="w-full h-full object-cover"
-        />
+        <img src={heroImage} alt="Luxury modern living room with sophisticated furniture" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-transparent" />
       </div>
 
@@ -32,20 +26,13 @@ export const Hero = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link to="/products">
-              <Button
-                size="lg"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-6 text-lg group shadow-xl hover:shadow-2xl transition-all duration-300"
-              >
+              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground font-semibold px-8 py-6 text-lg group shadow-xl hover:shadow-2xl transition-all duration-300">
                 Shop Collections
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
               </Button>
             </Link>
             <a href="#bestsellers">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary px-8 py-6 text-lg backdrop-blur-sm transition-all duration-300"
-              >
+              <Button size="lg" variant="outline" className="border-2 border-primary-foreground hover:bg-primary-foreground px-8 py-6 text-lg backdrop-blur-sm transition-all duration-300 text-slate-950">
                 Explore Best Sellers
               </Button>
             </a>
@@ -59,6 +46,5 @@ export const Hero = () => {
           <div className="w-1 h-2 bg-accent rounded-full animate-pulse" />
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
