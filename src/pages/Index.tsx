@@ -2,6 +2,9 @@ import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Collections } from "@/components/Collections";
 import { BestSellers } from "@/components/BestSellers";
+import { ProductBundles } from "@/components/ProductBundles";
+import { Testimonials } from "@/components/Testimonials";
+import { TrustBadges } from "@/components/TrustBadges";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
@@ -10,10 +13,13 @@ const Index = () => {
       <Header />
       <main className="pt-[88px]" role="main">
         <Hero />
+        <TrustBadges />
         <Collections />
         <div id="bestsellers">
           <BestSellers />
         </div>
+        <ProductBundles />
+        <Testimonials />
       </main>
       <Footer />
     </div>
