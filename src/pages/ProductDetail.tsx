@@ -1,211 +1,517 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
-import { ArrowLeft, ShoppingCart, Minus, Plus } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Minus, Plus, Check, Loader2, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-const products = [
-  {
-    id: 1,
-    name: "3-Piece Aluminum Patio Set",
-    description: "All-weather patio furniture with 6.7\" thick Olefin fabric cushions and coffee table. Perfect for outdoor entertaining with weather-resistant materials and comfortable seating.",
-    price: 825.49,
-    image: "https://images.unsplash.com/photo-1601140528547-2e03e96e5b01?w=800&q=80",
-    category: "Patio",
-    badge: "Best Seller",
-    features: [
-      "Weather-resistant aluminum frame",
-      "6.7\" thick Olefin fabric cushions",
-      "Includes coffee table",
-      "Easy to clean and maintain",
-      "UV-resistant materials"
-    ]
-  },
-  {
-    id: 2,
-    name: "EVA 180 TV Stand",
-    description: "Modern entertainment center in black matt and gloss finish, 70.87 inches",
-    price: 549.99,
-    image: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=800&q=80",
-    category: "Living Room",
-    badge: "Trending",
-    features: [
-      "70.87 inches wide",
-      "Black matt and gloss finish",
-      "Cable management system",
-      "Adjustable shelves",
-      "Supports TVs up to 85\""
-    ]
-  },
-  {
-    id: 3,
-    name: "8-Seater Dining Table",
-    description: "Formal traditional design with self-storing leaf, cherry finish wooden furniture",
-    price: 981.37,
-    image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80",
-    category: "Dining",
-    badge: "Premium",
-    features: [
-      "Seats up to 8 people",
-      "Self-storing leaf extension",
-      "Cherry wood finish",
-      "Traditional formal design",
-      "Solid wood construction"
-    ]
-  },
-];
+type Product = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  long_description: string | null;
+  price: number;
+  compare_at_price: number | null;
+  category: string;
+  badge: string | null;
+  brand: string | null;
+  dimensions: any;
+  care_instructions: string | null;
+};
+
+type ProductImage = {
+  url: string;
+  alt_text: string | null;
+};
+
+type ProductColor = {
+  id: string;
+  name: string;
+  hex_code: string;
+  image_url: string | null;
+  price_adjustment: number;
+  in_stock: boolean;
+};
+
+type ProductTexture = {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  price_adjustment: number;
+  in_stock: boolean;
+};
+
+type ProductVariation = {
+  id: string;
+  variation_type: string;
+  value: string;
+  price_adjustment: number;
+  in_stock: boolean;
+};
+
+type ProductFeature = {
+  feature: string;
+};
 
 export default function ProductDetail() {
-  const { id } = useParams();
+  const { slug } = useParams<{ slug: string }>();
   const { addItem } = useCart();
+  
+  const [product, setProduct] = useState<Product | null>(null);
+  const [images, setImages] = useState<ProductImage[]>([]);
+  const [colors, setColors] = useState<ProductColor[]>([]);
+  const [textures, setTextures] = useState<ProductTexture[]>([]);
+  const [variations, setVariations] = useState<ProductVariation[]>([]);
+  const [features, setFeatures] = useState<ProductFeature[]>([]);
+  const [loading, setLoading] = useState(true);
+  
   const [quantity, setQuantity] = useState(1);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedTexture, setSelectedTexture] = useState<string | null>(null);
+  const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  const product = products.find((p) => p.id === Number(id));
+  useEffect(() => {
+    if (slug) {
+      fetchProductData();
+    }
+  }, [slug]);
 
-  if (!product) {
+  const fetchProductData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch product
+      const { data: productData, error: productError } = await supabase
+        .from("products")
+        .select("*")
+        .eq("slug", slug)
+        .single();
+
+      if (productError) throw productError;
+      setProduct(productData);
+
+      // Fetch images
+      const { data: imagesData } = await supabase
+        .from("product_images")
+        .select("url, alt_text")
+        .eq("product_id", productData.id)
+        .order("display_order");
+      setImages(imagesData || []);
+
+      // Fetch colors
+      const { data: colorsData } = await supabase
+        .from("product_colors")
+        .select("*")
+        .eq("product_id", productData.id)
+        .order("display_order");
+      if (colorsData && colorsData.length > 0) {
+        setColors(colorsData);
+        setSelectedColor(colorsData[0].id);
+      }
+
+      // Fetch textures
+      const { data: texturesData } = await supabase
+        .from("product_textures")
+        .select("*")
+        .eq("product_id", productData.id)
+        .order("display_order");
+      if (texturesData && texturesData.length > 0) {
+        setTextures(texturesData);
+        setSelectedTexture(texturesData[0].id);
+      }
+
+      // Fetch variations
+      const { data: variationsData } = await supabase
+        .from("product_variations")
+        .select("*")
+        .eq("product_id", productData.id)
+        .order("display_order");
+      if (variationsData && variationsData.length > 0) {
+        setVariations(variationsData);
+        setSelectedVariation(variationsData[0].id);
+      }
+
+      // Fetch features
+      const { data: featuresData } = await supabase
+        .from("product_features")
+        .select("feature")
+        .eq("product_id", productData.id)
+        .order("display_order");
+      setFeatures(featuresData || []);
+
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      toast.error("Failed to load product details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculatePrice = () => {
+    if (!product) return 0;
+    let finalPrice = Number(product.price);
+
+    if (selectedColor) {
+      const color = colors.find((c) => c.id === selectedColor);
+      if (color) finalPrice += Number(color.price_adjustment);
+    }
+
+    if (selectedTexture) {
+      const texture = textures.find((t) => t.id === selectedTexture);
+      if (texture) finalPrice += Number(texture.price_adjustment);
+    }
+
+    if (selectedVariation) {
+      const variation = variations.find((v) => v.id === selectedVariation);
+      if (variation) finalPrice += Number(variation.price_adjustment);
+    }
+
+    return finalPrice;
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+
+    const finalPrice = calculatePrice();
+    const selectedColorObj = colors.find((c) => c.id === selectedColor);
+    const selectedTextureObj = textures.find((t) => t.id === selectedTexture);
+    const selectedVariationObj = variations.find((v) => v.id === selectedVariation);
+
+    let itemName = product.name;
+    if (selectedColorObj) itemName += ` - ${selectedColorObj.name}`;
+    if (selectedTextureObj) itemName += ` (${selectedTextureObj.name})`;
+    if (selectedVariationObj) itemName += ` - ${selectedVariationObj.value}`;
+
+    addItem({
+      id: `${product.id}-${selectedColor}-${selectedTexture}-${selectedVariation}`,
+      name: itemName,
+      price: finalPrice,
+      quantity: quantity,
+      image: images[0]?.url || "/placeholder.svg",
+    });
+
+    toast.success(`${itemName} added to cart`);
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Product Not Found</h1>
-          <Link to="/products">
-            <Button>Back to Products</Button>
-          </Link>
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-accent" />
         </div>
+        <Footer />
       </div>
     );
   }
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addItem(product);
-    }
-  };
+  if (!product) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4">Product Not Found</h1>
+            <Link to="/products">
+              <Button>Back to Products</Button>
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const finalPrice = calculatePrice();
 
   return (
-    <div className="min-h-screen pb-20 lg:pb-0">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="pt-[88px]" role="main">
-        <article className="container mx-auto px-4 py-12">
-          {/* Breadcrumb */}
-          <nav aria-label="Breadcrumb" className="mb-8">
-            <Link
-              to="/products"
-              className="inline-flex items-center text-muted-foreground hover:text-accent transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" aria-hidden="true" />
-              Back to Products
-            </Link>
-          </nav>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Product Image */}
-            <div className="relative animate-fade-in">
-              <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+      
+      <main className="flex-1 container mx-auto px-4 py-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* Product Images */}
+            <div className="space-y-4 animate-fade-in">
+              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl border-2 border-border">
                 <img
-                  src={product.image}
-                  alt={product.name}
+                  src={images[selectedImageIndex]?.url || "/placeholder.svg"}
+                  alt={images[selectedImageIndex]?.alt_text || product.name}
                   className="w-full h-full object-cover"
                 />
+                {product.badge && (
+                  <Badge className="absolute top-6 right-6 text-lg px-4 py-2 bg-accent text-accent-foreground shadow-xl">
+                    {product.badge}
+                  </Badge>
+                )}
               </div>
-              {product.badge && (
-                <Badge className="absolute top-4 right-4 bg-accent text-accent-foreground font-semibold text-base px-4 py-2">
-                  {product.badge}
-                </Badge>
+              
+              {images.length > 1 && (
+                <div className="grid grid-cols-4 gap-3">
+                  {images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedImageIndex(idx)}
+                      className={cn(
+                        "aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105",
+                        selectedImageIndex === idx
+                          ? "border-accent shadow-lg"
+                          : "border-border hover:border-accent/50"
+                      )}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.alt_text || `${product.name} view ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* Product Info */}
-            <div className="animate-fade-up">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                {product.name}
-              </h1>
-              
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-primary">
-                  ${product.price}
+            {/* Product Details */}
+            <div className="space-y-8 animate-fade-in">
+              <div>
+                {product.brand && (
+                  <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">
+                    {product.brand}
+                  </p>
+                )}
+                <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+                  {product.name}
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  {product.description}
+                </p>
+              </div>
+
+              {/* Price */}
+              <div className="flex items-baseline gap-4 py-4 border-y border-border">
+                <span className="text-5xl font-bold text-accent">
+                  ${finalPrice.toFixed(2)}
                 </span>
-                <span className="text-lg text-muted-foreground ml-2">USD</span>
+                {product.compare_at_price && (
+                  <span className="text-2xl text-muted-foreground line-through">
+                    ${product.compare_at_price.toFixed(2)}
+                  </span>
+                )}
               </div>
 
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                {product.description}
-              </p>
+              {/* Color Selection */}
+              {colors.length > 0 && (
+                <div className="space-y-4">
+                  <label className="text-lg font-semibold text-foreground">
+                    Color: {colors.find((c) => c.id === selectedColor)?.name}
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {colors.map((color) => (
+                      <button
+                        key={color.id}
+                        onClick={() => setSelectedColor(color.id)}
+                        disabled={!color.in_stock}
+                        className={cn(
+                          "relative w-14 h-14 rounded-full border-4 transition-all duration-300 hover:scale-110 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg",
+                          selectedColor === color.id
+                            ? "border-accent shadow-xl"
+                            : "border-border hover:border-accent/50"
+                        )}
+                        style={{ backgroundColor: color.hex_code }}
+                        title={color.name}
+                      >
+                        {selectedColor === color.id && (
+                          <Check className="absolute inset-0 m-auto text-white drop-shadow-lg" size={24} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-              {/* Features */}
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold mb-4">Key Features</h2>
-                <ul className="space-y-3" role="list">
-                  {product.features?.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <span className="text-accent mr-3 mt-1" aria-hidden="true">✓</span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {/* Texture/Material Selection */}
+              {textures.length > 0 && (
+                <div className="space-y-4">
+                  <label className="text-lg font-semibold text-foreground">
+                    Material: {textures.find((t) => t.id === selectedTexture)?.name}
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {textures.map((texture) => (
+                      <button
+                        key={texture.id}
+                        onClick={() => setSelectedTexture(texture.id)}
+                        disabled={!texture.in_stock}
+                        className={cn(
+                          "p-4 rounded-xl border-2 transition-all duration-300 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed bg-card",
+                          selectedTexture === texture.id
+                            ? "border-accent shadow-lg bg-accent/5"
+                            : "border-border hover:border-accent/50"
+                        )}
+                      >
+                        <div className="font-semibold text-foreground">{texture.name}</div>
+                        {texture.description && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {texture.description}
+                          </div>
+                        )}
+                        {texture.price_adjustment !== 0 && (
+                          <div className="text-sm font-semibold text-accent mt-2">
+                            {texture.price_adjustment > 0 ? '+' : ''}${texture.price_adjustment.toFixed(2)}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Size/Variation Selection */}
+              {variations.length > 0 && (
+                <div className="space-y-4">
+                  <label className="text-lg font-semibold text-foreground">
+                    {variations[0].variation_type}: {variations.find((v) => v.id === selectedVariation)?.value}
+                  </label>
+                  <div className="flex flex-wrap gap-3">
+                    {variations.map((variation) => (
+                      <button
+                        key={variation.id}
+                        onClick={() => setSelectedVariation(variation.id)}
+                        disabled={!variation.in_stock}
+                        className={cn(
+                          "px-6 py-3 rounded-xl border-2 font-semibold transition-all duration-300 hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed bg-card",
+                          selectedVariation === variation.id
+                            ? "border-accent bg-accent text-accent-foreground shadow-lg"
+                            : "border-border hover:border-accent/50 text-foreground"
+                        )}
+                      >
+                        {variation.value}
+                        {variation.price_adjustment !== 0 && (
+                          <span className="ml-2 text-sm">
+                            ({variation.price_adjustment > 0 ? '+' : ''}${variation.price_adjustment.toFixed(0)})
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Quantity Selector */}
-              <div className="mb-8">
-                <label htmlFor="quantity" className="block text-sm font-medium mb-3">
-                  Quantity
-                </label>
+              <div className="space-y-4">
+                <label className="text-lg font-semibold text-foreground">Quantity</label>
                 <div className="flex items-center gap-4">
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    aria-label="Decrease quantity"
+                    className="h-12 w-12 border-2 hover:border-accent"
                   >
-                    <Minus className="h-4 w-4" aria-hidden="true" />
+                    <Minus className="h-5 w-5" />
                   </Button>
-                  <input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-20 text-center border rounded-md py-2 font-semibold focus:outline-none focus:ring-2 focus:ring-accent"
-                    aria-label="Quantity"
-                  />
+                  <span className="text-2xl font-bold w-16 text-center text-foreground">
+                    {quantity}
+                  </span>
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => setQuantity(quantity + 1)}
-                    aria-label="Increase quantity"
+                    className="h-12 w-12 border-2 hover:border-accent"
                   >
-                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    <Plus className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
 
-              {/* Add to Cart Button */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              {/* Add to Cart Buttons */}
+              <div className="flex gap-4 pt-4">
                 <Button
-                  size="lg"
                   onClick={handleAddToCart}
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg py-6"
-                  aria-label={`Add ${quantity} ${product.name} to cart`}
+                  size="lg"
+                  className="flex-1 h-14 text-lg shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <ShoppingCart className="mr-2 h-5 w-5" aria-hidden="true" />
-                  Add to Cart
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Add to Cart - ${(finalPrice * quantity).toFixed(2)}
                 </Button>
                 <Link to="/cart" className="flex-1">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full border-2 font-semibold text-lg py-6"
-                  >
+                  <Button variant="outline" size="lg" className="w-full h-14 text-lg border-2 hover:border-accent">
                     View Cart
                   </Button>
                 </Link>
               </div>
+
+              {/* Product Information */}
+              <Card className="bg-card/50 backdrop-blur border-2">
+                <CardContent className="p-6 space-y-6">
+                  {product.long_description && (
+                    <div>
+                      <h3 className="text-xl font-bold mb-3 text-foreground">Description</h3>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {product.long_description}
+                      </p>
+                    </div>
+                  )}
+
+                  {features.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold mb-3 text-foreground">Features</h3>
+                      <ul className="space-y-2">
+                        {features.map((feature, idx) => (
+                          <li key={idx} className="flex items-start text-muted-foreground">
+                            <Check className="h-5 w-5 text-accent mr-3 mt-0.5 flex-shrink-0" />
+                            <span>{feature.feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {product.dimensions && (
+                    <div>
+                      <h3 className="text-xl font-bold mb-3 text-foreground">Dimensions</h3>
+                      <div className="grid grid-cols-3 gap-4 text-muted-foreground">
+                        {product.dimensions.width && (
+                          <div>
+                            <div className="text-sm text-muted-foreground/70">Width</div>
+                            <div className="font-semibold">{product.dimensions.width}</div>
+                          </div>
+                        )}
+                        {product.dimensions.depth && (
+                          <div>
+                            <div className="text-sm text-muted-foreground/70">Depth</div>
+                            <div className="font-semibold">{product.dimensions.depth}</div>
+                          </div>
+                        )}
+                        {product.dimensions.height && (
+                          <div>
+                            <div className="text-sm text-muted-foreground/70">Height</div>
+                            <div className="font-semibold">{product.dimensions.height}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {product.care_instructions && (
+                    <div>
+                      <h3 className="text-xl font-bold mb-3 text-foreground">Care Instructions</h3>
+                      <p className="text-muted-foreground">{product.care_instructions}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
-        </article>
+        </div>
       </main>
+
       <Footer />
     </div>
   );
