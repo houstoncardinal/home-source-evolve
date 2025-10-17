@@ -116,8 +116,12 @@ export default function Products() {
             <div className="flex justify-center items-center py-20">
               <Loader2 className="h-12 w-12 animate-spin text-accent" />
             </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-xl text-muted-foreground">No products found in this category</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
               {filteredProducts.map((product) => (
                 <Card 
                   key={product.id} 
@@ -182,12 +186,6 @@ export default function Products() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          )}
-
-          {!loading && filteredProducts.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-xl text-muted-foreground">No products found in this category</p>
             </div>
           )}
         </div>
