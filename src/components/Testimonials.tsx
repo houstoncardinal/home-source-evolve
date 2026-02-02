@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
+import { motion } from "framer-motion";
 
 const testimonials = [
   {
@@ -28,54 +29,130 @@ const testimonials = [
   },
 ];
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
+    },
+  },
+};
+
 export const Testimonials = () => {
   return (
-    <section className="py-24 bg-muted/30" aria-labelledby="testimonials-heading">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 id="testimonials-heading" className="text-4xl md:text-5xl font-bold mb-4">
+    <section className="py-28 bg-muted/30 relative overflow-hidden" aria-labelledby="testimonials-heading">
+      {/* Background Decoration */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-accent/5 rounded-full blur-3xl" />
+      
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Section Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
+          className="text-center mb-20"
+        >
+          <span className="inline-block px-4 py-1.5 bg-accent/10 text-accent text-sm font-medium rounded-full mb-6">
+            Client Stories
+          </span>
+          <h2 id="testimonials-heading" className="text-4xl md:text-6xl font-display font-bold mb-6">
             Loved by Thousands
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            See what our customers have to say about their experience
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-light">
+            Hear from our satisfied customers who transformed their homes
           </p>
-        </div>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {testimonials.map((testimonial, index) => (
-            <Card
-              key={testimonial.id}
-              className="border-0 shadow-lg hover:shadow-xl transition-all duration-500 animate-fade-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <CardContent className="p-8">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-5 w-5 fill-accent text-accent"
-                      aria-hidden="true"
-                    />
-                  ))}
+        {/* Testimonials Grid */}
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-50px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto"
+        >
+          {testimonials.map((testimonial) => (
+            <motion.div key={testimonial.id} variants={itemVariants}>
+              <Card className="border-0 bg-card premium-card h-full relative overflow-hidden">
+                {/* Quote Icon */}
+                <div className="absolute top-6 right-6 w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
+                  <Quote className="h-5 w-5 text-accent" />
                 </div>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  "{testimonial.text}"
-                </p>
-                <div className="flex items-center gap-4">
-                  <img
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full object-cover ring-2 ring-accent/20"
-                  />
-                  <div>
-                    <p className="font-semibold">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                
+                <CardContent className="p-8 pt-10">
+                  {/* Rating */}
+                  <div className="flex gap-1 mb-6">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="h-4 w-4 fill-accent text-accent"
+                        aria-hidden="true"
+                      />
+                    ))}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                  
+                  {/* Quote */}
+                  <p className="text-muted-foreground mb-8 leading-relaxed font-light text-lg">
+                    "{testimonial.text}"
+                  </p>
+                  
+                  {/* Author */}
+                  <div className="flex items-center gap-4 pt-6 border-t border-border">
+                    <div className="relative">
+                      <img
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        className="w-14 h-14 rounded-full object-cover"
+                      />
+                      <div className="absolute inset-0 rounded-full ring-2 ring-accent/20 ring-offset-2 ring-offset-background" />
+                    </div>
+                    <div>
+                      <p className="font-display font-semibold text-lg">{testimonial.name}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
+
+        {/* Stats Row */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
+          className="flex flex-wrap justify-center gap-12 lg:gap-24 mt-20 pt-12 border-t border-border"
+        >
+          {[
+            { value: "15,000+", label: "Happy Customers" },
+            { value: "4.9/5", label: "Average Rating" },
+            { value: "50,000+", label: "5-Star Reviews" },
+          ].map((stat, index) => (
+            <div key={index} className="text-center">
+              <div className="text-4xl md:text-5xl font-display font-bold text-foreground mb-2">
+                {stat.value}
+              </div>
+              <div className="text-muted-foreground font-light">{stat.label}</div>
+            </div>
+          ))}
+        </motion.div>
       </div>
     </section>
   );
