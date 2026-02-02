@@ -1,50 +1,67 @@
-import { Shield, Truck, Award, HeadphonesIcon } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Shield, Truck, Award, HeadphonesIcon, Gift, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 const badges = [
   {
     icon: Shield,
     title: "Secure Checkout",
-    description: "256-bit SSL encryption protects your data",
+    description: "256-bit SSL encryption",
   },
   {
     icon: Truck,
     title: "Free Shipping",
-    description: "On orders over $500 nationwide",
+    description: "On orders over $500",
   },
   {
     icon: Award,
     title: "5-Year Warranty",
-    description: "Premium protection on all furniture",
+    description: "Premium protection",
   },
   {
     icon: HeadphonesIcon,
-    title: "24/7 Support",
-    description: "Expert help whenever you need it",
+    title: "24/7 Concierge",
+    description: "White glove service",
+  },
+  {
+    icon: Gift,
+    title: "Gift Wrapping",
+    description: "Complimentary",
+  },
+  {
+    icon: Sparkles,
+    title: "Exclusive Access",
+    description: "Members only sales",
   },
 ];
 
 export const TrustBadges = () => {
   return (
-    <section className="py-16 bg-background border-y border-border">
+    <section className="py-12 bg-secondary/50 border-y border-border/50">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6"
+        >
           {badges.map((badge, index) => (
-            <Card
+            <motion.div
               key={index}
-              className="border-0 bg-card/50 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 animate-fade-up"
-              style={{ animationDelay: `${index * 50}ms` }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.05, duration: 0.5 }}
+              className="flex flex-col items-center text-center group"
             >
-              <CardContent className="p-6 text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 text-accent mb-4 shadow-[0_0_20px_rgba(var(--accent),0.15)]">
-                  <badge.icon className="h-7 w-7" aria-hidden="true" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">{badge.title}</h3>
-                <p className="text-sm text-muted-foreground">{badge.description}</p>
-              </CardContent>
-            </Card>
+              <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-3 group-hover:bg-accent/20 transition-colors duration-300">
+                <badge.icon className="h-5 w-5 text-accent" aria-hidden="true" />
+              </div>
+              <h3 className="font-semibold text-sm mb-1">{badge.title}</h3>
+              <p className="text-xs text-muted-foreground">{badge.description}</p>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
