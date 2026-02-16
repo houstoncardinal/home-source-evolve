@@ -2,54 +2,29 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import diningImage from "@/assets/dining-collection.jpg";
-import bedroomImage from "@/assets/bedroom-collection.jpg";
-import officeImage from "@/assets/office-collection.jpg";
-import patioImage from "@/assets/patio-collection.jpg";
-import kitchenImage from "@/assets/kitchen-collection.jpg";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const collections = [
-  {
-    title: "Dining Rooms",
-    description: "Where memories are made",
-    image: diningImage,
-    id: "dining",
-    category: "Dining Room",
-    featured: true,
-  },
-  {
-    title: "Bedrooms",
-    description: "Your sanctuary of rest",
-    image: bedroomImage,
-    id: "bedrooms",
-    category: "Bedroom",
-    featured: false,
-  },
-  {
-    title: "Home Office",
-    description: "Productivity meets elegance",
-    image: officeImage,
-    id: "office",
-    category: "Office",
-    featured: false,
-  },
-  {
-    title: "Patio",
-    description: "Outdoor luxury living",
-    image: patioImage,
-    id: "patio",
-    category: "Patio",
-    featured: false,
-  },
-  {
-    title: "Kitchen",
-    description: "The heart of your home",
-    image: kitchenImage,
-    id: "kitchen",
-    category: "Kitchen",
-    featured: false,
-  },
-];
+type CategoryPreview = {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  productId: string;
+  productSlug: string;
+  image?: string;
+  featured?: boolean;
+};
+
+const categoryDescriptions: Record<string, string> = {
+  "Living Room": "Sectionals, recliners, and accent tables to anchor your space",
+  "Dining Room": "Dining sets and bar seating for memorable gatherings",
+  Bedroom: "Beds, vanities, and storage for restorative sleep",
+  Office: "Desks, storage, and seating built for productivity",
+  Accessories: "Mirrors, tables, and décor that finish the room",
+};
+
+const categoryOrder = ["Living Room", "Dining Room", "Bedroom", "Office", "Accessories"];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -75,10 +50,102 @@ const itemVariants = {
 };
 
 export const Collections = () => {
+  const [previews, setPreviews] = useState<CategoryPreview[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadCollections = async () => {
+      try {
+        setLoading(true);
+        const { data: products, error } = await supabase
+          .from("products")
+          .select("id, category, name, slug, description, featured")
+          .eq("in_stock", true)
+          .order("featured", { ascending: false })
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        if (!products) return;
+
+        // Pick the lead product per category in desired order
+        const leadPerCategory: Record<string, CategoryPreview> = {};
+        for (const product of products) {
+          const cat = product.category;
+          if (!cat || !categoryOrder.includes(cat)) continue;
+          if (leadPerCategory[cat]) continue;
+          leadPerCategory[cat] = {
+            id: cat.toLowerCase().replace(/\s+/g, "-"),
+            title: cat,
+            category: cat,
+            description: categoryDescriptions[cat] || product.description || "Explore the latest arrivals",
+            productId: product.id,
+            productSlug: product.slug,
+            featured: product.featured ?? false,
+          };
+        }
+
+        const leadProducts = Object.values(leadPerCategory);
+        const ids = leadProducts.map((p) => p.productId);
+
+        if (ids.length) {
+          const { data: images, error: imageError } = await supabase
+            .from("product_images")
+            .select("product_id, url")
+            .in("product_id", ids)
+            .eq("is_primary", true);
+          if (imageError) throw imageError;
+
+          const imageMap = new Map(images?.map((img) => [img.product_id, img.url]));
+          leadProducts.forEach((p) => {
+            p.image = imageMap.get(p.productId);
+          });
+        }
+
+        // Sort by desired order then featured flag
+        const ordered = leadProducts
+          .sort((a, b) => {
+            const orderDiff = categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
+            if (orderDiff !== 0) return orderDiff;
+            return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+          });
+
+        setPreviews(ordered);
+      } catch (err) {
+        console.error("Error loading collections", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCollections();
+  }, []);
+
+  const cards = useMemo(
+    () =>
+      (loading ? categoryOrder : previews.map((p) => p.category)).map((category, index) => {
+        const data = previews.find((p) => p.category === category);
+        const title = data?.title || category;
+        const description =
+          data?.description || categoryDescriptions[category] || "Explore the latest arrivals";
+        const image = data?.image || "/placeholder.svg";
+        const featured = index === 0;
+        const id = data?.id || category.toLowerCase().replace(/\s+/g, "-");
+        const targetSlug = data?.productSlug;
+
+        return { id, category, title, description, image, featured, targetSlug };
+      }),
+    [loading, previews]
+  );
+
+  if (!loading && cards.length === 0) return null;
+
   return (
-    <section id="collections" className="py-28 bg-muted/30">
-      <div className="container mx-auto px-4">
-        {/* Section Header */}
+    <section id="collections" className="py-24 lg:py-32 relative overflow-hidden bg-gradient-to-b from-background via-background/70 to-muted/10">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute left-[-120px] top-10 w-[420px] h-[420px] bg-accent/12 blur-3xl rounded-full" />
+        <div className="absolute right-[-160px] bottom-0 w-[360px] h-[360px] bg-primary/10 blur-3xl rounded-full" />
+      </div>
+      <div className="container mx-auto px-4 relative z-10">
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -86,18 +153,15 @@ export const Collections = () => {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="text-center mb-20"
         >
-          <span className="inline-block px-4 py-1.5 bg-accent/10 text-accent text-sm font-medium rounded-full mb-6">
-            Curated Spaces
-          </span>
-          <h2 className="text-4xl md:text-6xl font-display font-bold mb-6 gold-underline inline-block">
+          <span className="section-label mb-6">Shop by Room</span>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6">
             Collections
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-light">
-            Discover thoughtfully designed furniture for every room in your home
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto font-light leading-relaxed">
+            Explore our full catalog organized by the rooms you love most
           </p>
         </motion.div>
 
-        {/* Collections Grid - Asymmetric Layout */}
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -105,29 +169,27 @@ export const Collections = () => {
           viewport={{ once: true, margin: "-50px" }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
         >
-          {collections.map((collection, index) => (
+          {cards.map((collection, index) => (
             <motion.div
               key={collection.id}
               variants={itemVariants}
               className={index === 0 ? "md:col-span-2 lg:col-span-2 lg:row-span-2" : ""}
             >
-              <Link to={`/products?category=${collection.category}`}>
+              <Link to={collection.targetSlug ? `/product/${collection.targetSlug}` : `/products?category=${collection.category}`}>
                 <Card
                   className={`group relative overflow-hidden bg-card border-0 cursor-pointer premium-card ${
                     index === 0 ? "h-[500px] lg:h-full" : "h-72 lg:h-80"
                   }`}
                 >
-                  {/* Image */}
                   <div className="absolute inset-0 overflow-hidden">
                     <img
                       src={collection.image}
                       alt={`${collection.title} furniture collection`}
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-[1.2s] ease-out"
+                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
                   </div>
 
-                  {/* Content */}
                   <div className="absolute inset-0 flex flex-col justify-end p-8 text-primary-foreground">
                     <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                       <span className="text-xs uppercase tracking-widest text-accent font-semibold mb-2 block opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -146,13 +208,11 @@ export const Collections = () => {
                     </div>
                   </div>
 
-                  {/* Shine Effect */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
                   </div>
 
-                  {/* Corner Accent */}
-                  {index === 0 && (
+                  {collection.featured && (
                     <div className="absolute top-6 right-6 px-4 py-2 bg-accent text-accent-foreground text-sm font-semibold rounded-full shadow-glow">
                       Featured
                     </div>

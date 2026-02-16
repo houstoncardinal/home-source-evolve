@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
 
 type Product = Database["public"]["Tables"]["products"]["Row"];
-type ProductImage = Pick<Database["public"]["Tables"]["product_images"]["Row"], "url" | "alt_text">;
+type ProductImage = Pick<Database["public"]["Tables"]["product_images"]["Row"], "url" | "alt_text" | "is_primary" | "display_order">;
 type ProductColor = Database["public"]["Tables"]["product_colors"]["Row"];
 type ProductTexture = Database["public"]["Tables"]["product_textures"]["Row"];
 type ProductVariation = Database["public"]["Tables"]["product_variations"]["Row"];
@@ -43,74 +43,47 @@ export default function ProductDetail() {
   const [selectedVariation, setSelectedVariation] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  useEffect(() => {
-    if (slug) {
-      fetchProductData();
-    }
-  }, [slug]);
-
-  const fetchProductData = async () => {
+  const fetchProductData = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Fetch product
-      const { data: productData, error: productError } = await supabase
+      const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select(`
+          *,
+          product_images (url, alt_text, is_primary, display_order),
+          product_colors (*),
+          product_textures (*),
+          product_variations (*),
+          product_features (feature, display_order)
+        `)
         .eq("slug", slug)
         .single();
 
-      if (productError) throw productError;
-      setProduct(productData);
+      if (error || !data) throw error;
 
-      // Fetch images
-      const { data: imagesData } = await supabase
-        .from("product_images")
-        .select("url, alt_text")
-        .eq("product_id", productData.id)
-        .order("display_order");
-      setImages(imagesData || []);
+      setProduct(data as Product);
 
-      // Fetch colors
-      const { data: colorsData } = await supabase
-        .from("product_colors")
-        .select("*")
-        .eq("product_id", productData.id)
-        .order("display_order");
-      if (colorsData && colorsData.length > 0) {
-        setColors(colorsData);
-        setSelectedColor(colorsData[0].id);
-      }
+      const imgs = (data as any).product_images as ProductImage[] | undefined;
+      const sortedImages = (imgs ?? []).sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+      setImages(sortedImages);
 
-      // Fetch textures
-      const { data: texturesData } = await supabase
-        .from("product_textures")
-        .select("*")
-        .eq("product_id", productData.id)
-        .order("display_order");
-      if (texturesData && texturesData.length > 0) {
-        setTextures(texturesData);
-        setSelectedTexture(texturesData[0].id);
-      }
+      const cols = ((data as any).product_colors as ProductColor[] | undefined) ?? [];
+      const sortedColors = cols.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+      setColors(sortedColors);
+      if (sortedColors.length) setSelectedColor(sortedColors[0].id);
 
-      // Fetch variations
-      const { data: variationsData } = await supabase
-        .from("product_variations")
-        .select("*")
-        .eq("product_id", productData.id)
-        .order("display_order");
-      if (variationsData && variationsData.length > 0) {
-        setVariations(variationsData);
-        setSelectedVariation(variationsData[0].id);
-      }
+      const tex = ((data as any).product_textures as ProductTexture[] | undefined) ?? [];
+      const sortedTex = tex.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+      setTextures(sortedTex);
+      if (sortedTex.length) setSelectedTexture(sortedTex[0].id);
 
-      // Fetch features
-      const { data: featuresData } = await supabase
-        .from("product_features")
-        .select("feature")
-        .eq("product_id", productData.id)
-        .order("display_order");
-      setFeatures(featuresData || []);
+      const vars = ((data as any).product_variations as ProductVariation[] | undefined) ?? [];
+      const sortedVars = vars.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0));
+      setVariations(sortedVars);
+      if (sortedVars.length) setSelectedVariation(sortedVars[0].id);
+
+      const feats = ((data as any).product_features as ProductFeature[] | undefined) ?? [];
+      setFeatures(feats.sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)));
 
     } catch (error) {
       console.error("Error fetching product:", error);
@@ -118,7 +91,13 @@ export default function ProductDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
+
+  useEffect(() => {
+    if (slug) {
+      fetchProductData();
+    }
+  }, [slug, fetchProductData]);
 
   const calculatePrice = (): number => {
     if (!product) return 0;
@@ -205,77 +184,94 @@ export default function ProductDetail() {
   }
 
   const finalPrice = calculatePrice();
+  const richDescription = product.long_description || product.description;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <main className="flex-1 container mx-auto px-4 py-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12">
-            {/* Product Images */}
-            <div className="space-y-4 animate-fade-in">
-              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-2xl border-2 border-border">
-                <img
-                  src={images[selectedImageIndex]?.url || "/placeholder.svg"}
-                  alt={images[selectedImageIndex]?.alt_text || product.name}
-                  className="w-full h-full object-cover"
-                />
-                {product.badge && (
-                  <Badge className="absolute top-6 right-6 text-lg px-4 py-2 bg-accent text-accent-foreground shadow-xl">
-                    {product.badge}
-                  </Badge>
-                )}
-              </div>
-              
-              {images.length > 1 && (
-                <div className="grid grid-cols-4 gap-3">
-                  {images.map((img, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className={cn(
-                        "aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 hover:scale-105",
-                        selectedImageIndex === idx
-                          ? "border-accent shadow-lg"
-                          : "border-border hover:border-accent/50"
-                      )}
-                    >
-                      <img
-                        src={img.url}
-                        alt={img.alt_text || `${product.name} view ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
+      <main className="flex-1 container mx-auto px-4 pt-16 lg:pt-24 pb-12">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-[1.1fr_0.9fr] gap-12">
+          {/* Product Images */}
+          <div className="space-y-4 animate-fade-in lg:sticky lg:top-28 lg:self-start">
+            <div className="relative aspect-[4/5] md:aspect-square rounded-2xl overflow-hidden shadow-2xl border border-border/80 bg-muted">
+              <img
+                src={images[selectedImageIndex]?.url || "/placeholder.svg"}
+                alt={images[selectedImageIndex]?.alt_text || product.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                sizes="(min-width: 1024px) 50vw, 100vw"
+              />
+              {product.badge && (
+                <Badge className="absolute top-6 right-6 text-sm md:text-lg px-3 md:px-4 py-2 bg-accent text-accent-foreground shadow-xl">
+                  {product.badge}
+                </Badge>
               )}
             </div>
+            
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={cn(
+                      "aspect-square rounded-lg overflow-hidden border transition-all duration-200 hover:scale-105",
+                      selectedImageIndex === idx
+                        ? "border-accent shadow-lg"
+                        : "border-border hover:border-accent/50"
+                    )}
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.alt_text || `${product.name} view ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-            {/* Product Details */}
-            <div className="space-y-8 animate-fade-in">
-              <div>
-                {product.brand && (
-                  <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">
-                    {product.brand}
-                  </p>
+          {/* Product Details */}
+          <div className="space-y-8 animate-fade-in">
+            <div>
+              {product.brand && (
+                <p className="text-sm font-semibold text-accent uppercase tracking-wider mb-2">
+                  {product.brand}
+                </p>
                 )}
                 <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
                   {product.name}
                 </h1>
-                <p className="text-muted-foreground text-lg">
-                  {product.description}
-                </p>
+                {richDescription && (
+                  <p className="text-muted-foreground text-lg leading-relaxed">
+                    {richDescription}
+                  </p>
+                )}
               </div>
 
               {/* Price */}
               <div className="flex items-baseline gap-4 py-4 border-y border-border">
-                <span className="text-5xl font-bold text-accent">
-                  ${finalPrice.toFixed(2)}
-                </span>
-                {product.compare_at_price && (
-                  <span className="text-2xl text-muted-foreground line-through">
-                    ${product.compare_at_price.toFixed(2)}
+                {(finalPrice ?? 0) > 0 ? (
+                  <>
+                    <span className="text-4xl md:text-5xl font-bold text-accent">
+                      ${finalPrice.toFixed(2)}
+                    </span>
+                    {product.compare_at_price && (
+                      <span className="text-2xl text-muted-foreground line-through">
+                        $
+                        {(typeof product.compare_at_price === "string"
+                          ? parseFloat(product.compare_at_price)
+                          : product.compare_at_price
+                        ).toFixed(2)}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-3xl font-semibold text-accent">
+                    Contact for Price
                   </span>
                 )}
               </div>
@@ -404,7 +400,7 @@ export default function ProductDetail() {
               </div>
 
               {/* Add to Cart Buttons */}
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Button
                   onClick={handleAddToCart}
                   size="lg"
@@ -421,13 +417,13 @@ export default function ProductDetail() {
               </div>
 
               {/* Product Information */}
-              <Card className="bg-card/50 backdrop-blur border-2">
+              <Card className="bg-card/60 backdrop-blur border border-border/70 shadow-lg">
                 <CardContent className="p-6 space-y-6">
-                  {product.long_description && (
+                  {richDescription && (
                     <div>
                       <h3 className="text-xl font-bold mb-3 text-foreground">Description</h3>
                       <p className="text-muted-foreground leading-relaxed">
-                        {product.long_description}
+                        {richDescription}
                       </p>
                     </div>
                   )}
@@ -480,9 +476,23 @@ export default function ProductDetail() {
                   )}
                 </CardContent>
               </Card>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Card className="border border-border/70 bg-card/70">
+                  <CardContent className="p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">Shipping</p>
+                    <p className="text-sm text-foreground">White-glove delivery. Tracking provided. Threshold or room-of-choice options available.</p>
+                  </CardContent>
+                </Card>
+                <Card className="border border-border/70 bg-card/70">
+                  <CardContent className="p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">Returns</p>
+                    <p className="text-sm text-foreground">30-day returns on eligible items. Need help? Dedicated concierge support.</p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
-        </div>
       </main>
 
       <Footer />

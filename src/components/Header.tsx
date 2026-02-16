@@ -12,6 +12,7 @@ const navigation = [
   { name: "Bedroom", href: "/products?category=Bedroom" },
   { name: "Dining", href: "/products?category=Dining Room" },
   { name: "Office", href: "/products?category=Office" },
+  { name: "Accessories", href: "/products?category=Accessories" },
 ];
 
 export const Header = () => {
@@ -45,18 +46,14 @@ export const Header = () => {
       {/* Promo Banner */}
       <AnimatePresence>
         {!scrolled && (
-          <motion.div 
+          <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-primary text-primary-foreground text-center py-2.5 text-sm font-medium overflow-hidden"
+            className="bg-accent text-white text-center py-2 text-xs font-medium overflow-hidden tracking-wide"
             role="alert"
           >
-            <span className="inline-flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
-              Exclusive Offer: Free White Glove Delivery on Orders Over $2,000
-              <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse" />
-            </span>
+            Complimentary White Glove Delivery on Orders Over $2,000
           </motion.div>
         )}
       </AnimatePresence>

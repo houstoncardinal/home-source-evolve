@@ -2,63 +2,60 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, Check, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const bundles = [
+type BundleProduct = {
+  id: string;
+  name: string;
+  price: number;
+  slug: string;
+  category: string | null;
+  description: string | null;
+  badge: string | null;
+  primary_image?: string;
+};
+
+type BundleConfig = {
+  id: string;
+  title: string;
+  description: string;
+  categories: string[];
+  badge?: string;
+};
+
+type Bundle = BundleConfig & {
+  items: BundleProduct[];
+  primaryImage?: string;
+};
+
+const bundleConfigs: BundleConfig[] = [
   {
-    id: 1,
-    name: "Complete Living Room Package",
-    description: "Everything you need for a modern, stylish living space",
-    price: 2799.99,
-    originalPrice: 3499.99,
-    savings: 20,
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80",
-    items: [
-      "Modern Sectional Sofa",
-      "Glass Coffee Table",
-      "2x End Tables",
-      "Floor Lamp",
-      "Area Rug (8x10)",
-      "Throw Pillows Set",
-    ],
-    featured: true,
+    id: "living-room-lounge",
+    title: "Living Room",
+    description: "Sectionals, recliners, and tables styled to coordinate",
+    categories: ["Living Room"],
+    badge: "Popular",
   },
   {
-    id: 2,
-    name: "Master Bedroom Suite",
-    description: "Transform your bedroom into a luxury retreat",
-    price: 2199.99,
-    originalPrice: 2899.99,
-    savings: 24,
-    image: "https://images.unsplash.com/photo-1505693314120-0d443867891c?w=800&q=80",
-    items: [
-      "King Platform Bed",
-      "Premium Mattress",
-      "2x Matching Nightstands",
-      "6-Drawer Dresser",
-      "Bedroom Bench",
-      "Premium Bedding Set",
-    ],
-    featured: false,
+    id: "bedroom-retreat",
+    title: "Bedroom",
+    description: "Beds, vanities, and storage for serene nights",
+    categories: ["Bedroom"],
   },
   {
-    id: 3,
-    name: "Dining Room Essentials",
-    description: "Host unforgettable dinners with this complete set",
-    price: 1899.99,
-    originalPrice: 2399.99,
-    savings: 21,
-    image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=800&q=80",
-    items: [
-      "Extendable Dining Table",
-      "6x Upholstered Chairs",
-      "Buffet Cabinet",
-      "Statement Chandelier",
-      "Table Linens Set",
-      "Centerpiece Décor",
-    ],
-    featured: false,
+    id: "dining-host",
+    title: "Dining & Bar",
+    description: "Dining sets, barstools, and occasional pieces",
+    categories: ["Dining Room"],
+  },
+  {
+    id: "office-focus",
+    title: "Office",
+    description: "Workspace-ready desks, storage, and seating",
+    categories: ["Office"],
   },
 ];
 
@@ -67,14 +64,14 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.12,
       delayChildren: 0.2,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 50 },
+  hidden: { opacity: 0, y: 40 },
   visible: {
     opacity: 1,
     y: 0,
@@ -86,136 +83,186 @@ const itemVariants = {
 };
 
 export const ProductBundles = () => {
+  const [products, setProducts] = useState<BundleProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadBundles();
+  }, []);
+
+  const loadBundles = async () => {
+    try {
+      setLoading(true);
+
+      const neededCategories = Array.from(
+        new Set(bundleConfigs.flatMap((bundle) => bundle.categories))
+      );
+
+      const { data: productsData, error: productsError } = await supabase
+        .from("products")
+        .select("id, name, price, slug, category, description, badge")
+        .in("category", neededCategories)
+        .eq("in_stock", true)
+        .order("featured", { ascending: false })
+        .order("created_at", { ascending: false });
+
+      if (productsError) throw productsError;
+
+      const productIds = (productsData ?? []).map((p) => p.id);
+      let imageMap: Record<string, string> = {};
+
+      if (productIds.length) {
+        const { data: imageData, error: imageError } = await supabase
+          .from("product_images")
+          .select("product_id, url")
+          .in("product_id", productIds)
+          .eq("is_primary", true);
+
+        if (imageError) throw imageError;
+        imageMap = Object.fromEntries(
+          (imageData ?? []).map((img) => [img.product_id, img.url])
+        );
+      }
+
+      const withImages: BundleProduct[] = (productsData ?? []).map((product) => ({
+        ...product,
+        primary_image: imageMap[product.id],
+      }));
+
+      setProducts(withImages);
+    } catch (error) {
+      console.error("Error loading bundles", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const bundles = useMemo<Bundle[]>(
+    () =>
+      bundleConfigs
+        .map((config) => {
+          const items = products.filter((p) =>
+            config.categories.includes(p.category ?? "")
+          );
+          const primaryImage =
+            items.find((p) => p.primary_image)?.primary_image ||
+            items[0]?.primary_image ||
+            "/placeholder.svg";
+
+          return {
+            ...config,
+            items,
+            primaryImage,
+          };
+        })
+        .filter((bundle) => bundle.items.length > 0),
+    [products]
+  );
+
+  if (!loading && bundles.length === 0) {
+    return null;
+  }
+
   return (
-    <section className="py-28 bg-gradient-to-b from-background via-muted/20 to-background" aria-labelledby="bundles-heading">
-      <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <motion.div 
+    <section
+      className="py-24 lg:py-32 relative overflow-hidden bg-gradient-to-b from-muted/20 via-background to-background"
+      aria-labelledby="bundles-heading"
+    >
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute left-[-160px] top-20 w-[420px] h-[420px] bg-accent/10 blur-3xl" />
+        <div className="absolute right-[-120px] bottom-0 w-[360px] h-[360px] bg-primary/12 blur-3xl" />
+      </div>
+      <div className="container mx-auto px-4 relative z-10">
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] }}
-          className="text-center mb-20"
+          className="text-center mb-16 lg:mb-20"
         >
-          <Badge className="mb-6 bg-accent/20 text-accent font-semibold px-4 py-2 border-0">
-            <Sparkles className="h-4 w-4 mr-2" />
-            Save Up to 24%
-          </Badge>
-          <h2 id="bundles-heading" className="text-4xl md:text-6xl font-display font-bold mb-6">
+          <span className="section-label mb-6">Room Packages</span>
+          <h2
+            id="bundles-heading"
+            className="text-4xl md:text-5xl lg:text-6xl font-display font-bold mb-6"
+          >
             Curated Bundles
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-light">
-            Complete room packages designed by experts, delivered at exceptional value
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-light leading-relaxed">
+            Coordinated packages styled by our design team so every piece feels intentional
           </p>
         </motion.div>
 
-        {/* Bundles Grid */}
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7 max-w-7xl mx-auto"
         >
-          {bundles.map((bundle) => (
-            <motion.div key={bundle.id} variants={itemVariants}>
-              <Card className={`group overflow-hidden border-0 bg-card premium-card h-full ${bundle.featured ? 'ring-2 ring-accent' : ''}`}>
-                {/* Image */}
-                <div className="relative h-56 overflow-hidden bg-muted">
-                  <img
-                    src={bundle.image}
-                    alt={bundle.name}
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-[1.2s] ease-out"
-                  />
-                  <Badge className="absolute top-4 right-4 bg-accent text-accent-foreground font-bold px-4 py-1.5 shadow-glow">
-                    Save {bundle.savings}%
-                  </Badge>
-                  {bundle.featured && (
-                    <Badge className="absolute top-4 left-4 bg-primary text-primary-foreground font-semibold px-4 py-1.5">
-                      Most Popular
-                    </Badge>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
+          {(loading ? bundleConfigs : bundles).slice(0, 4).map((bundle, idx) => {
+            const items = "items" in bundle ? bundle.items : [];
+            const pricedItems = items.filter(
+              (p) => (typeof p.price === "string" ? parseFloat(p.price) : p.price) > 0
+            );
+            const minPrice =
+              pricedItems.length > 0
+                ? Math.min(
+                    ...pricedItems.map((p) =>
+                      typeof p.price === "string" ? parseFloat(p.price) : p.price
+                    )
+                  )
+                : null;
 
-                <CardContent className="p-8">
-                  <h3 className="text-xl font-display font-bold mb-3 group-hover:text-accent transition-colors duration-300">
-                    {bundle.name}
-                  </h3>
-                  <p className="text-muted-foreground mb-6 font-light">
-                    {bundle.description}
-                  </p>
+            return (
+              <motion.div key={bundle.id} variants={itemVariants}>
+                <Card className="group overflow-hidden border border-border/70 bg-card premium-card h-full shadow-[0_24px_80px_-50px_rgba(0,0,0,0.45)]">
+                  <div className="relative aspect-[3/4] overflow-hidden bg-muted">
+                    <img
+                      src={"primaryImage" in bundle ? bundle.primaryImage : "/placeholder.svg"}
+                      alt={bundle.title}
+                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/25 to-transparent" />
 
-                  {/* Items List */}
-                  <div className="mb-6">
-                    <p className="text-sm font-semibold text-muted-foreground mb-3 flex items-center">
-                      <Package className="h-4 w-4 mr-2 text-accent" />
-                      Includes {bundle.items.length} premium items:
-                    </p>
-                    <ul className="space-y-2">
-                      {bundle.items.slice(0, 4).map((item, idx) => (
-                        <li key={idx} className="text-sm flex items-start text-muted-foreground font-light">
-                          <Check className="h-4 w-4 text-accent mr-2 flex-shrink-0 mt-0.5" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                      {bundle.items.length > 4 && (
-                        <li className="text-sm text-accent font-medium">
-                          + {bundle.items.length - 4} more items
-                        </li>
-                      )}
-                    </ul>
+                    {bundle.badge && (
+                      <Badge className="absolute top-4 left-4 bg-accent text-accent-foreground font-semibold text-xs uppercase tracking-wider px-3 py-1 shadow">
+                        {bundle.badge}
+                      </Badge>
+                    )}
+
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white space-y-2">
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-white/70">Curated set</p>
+                      <h3 className="text-xl font-display font-semibold leading-tight">
+                        {bundle.title}
+                      </h3>
+                      <p className="text-white/70 text-sm font-light mb-2">
+                        {bundle.description}
+                      </p>
+                      <div className="flex items-center justify-between text-sm text-white/80">
+                        <span>{(items as BundleProduct[]).length || "—"} pieces</span>
+                        {minPrice !== null && (
+                          <span>From ${minPrice.toLocaleString("en-US", { minimumFractionDigits: 0 })}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Price and CTA */}
-                  <div className="pt-6 border-t border-border">
-                    <div className="mb-4">
-                      <div className="flex items-baseline gap-3">
-                        <span className="text-3xl font-display font-bold text-foreground">
-                          ${bundle.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </span>
-                        <span className="text-lg text-muted-foreground line-through">
-                          ${bundle.originalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-accent font-semibold mt-1">
-                        You save ${(bundle.originalPrice - bundle.price).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </p>
-                    </div>
-                    <Link to="/products">
+                  <CardContent className="p-5">
+                    <Link to={`/products?category=${bundle.categories[0]}`}>
                       <Button
-                        size="lg"
-                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-semibold shadow-glow hover:shadow-[0_0_60px_-8px_hsl(38_85%_55%_/_0.6)] transition-all duration-500 btn-shimmer group/btn"
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-sm font-semibold tracking-[0.08em] rounded-full border-border hover:border-foreground hover:bg-foreground hover:text-background group/btn"
                       >
-                        View Bundle
+                        Shop This Look
                         <ArrowRight className="ml-2 h-4 w-4 group-hover/btn:translate-x-1 transition-transform" />
                       </Button>
                     </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        {/* Custom Bundle CTA */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="text-center mt-16"
-        >
-          <p className="text-muted-foreground mb-4 font-light">
-            Need a custom bundle? Our design team can help!
-          </p>
-          <Button
-            variant="outline"
-            size="lg"
-            className="border-2 border-foreground hover:bg-foreground hover:text-background font-semibold px-10 py-6 transition-all duration-500"
-          >
-            Request Custom Bundle
-          </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </motion.div>
       </div>
     </section>
