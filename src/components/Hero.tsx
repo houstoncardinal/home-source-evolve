@@ -89,8 +89,7 @@ export const Hero = () => {
             <Link to="/products?category=Living Room">
               <Button
                 size="lg"
-                variant="outline"
-                className="border border-white/25 hover:bg-white/10 hover:border-white/40 text-white px-10 py-7 text-base rounded-full backdrop-blur-sm transition-all duration-500"
+                className="border border-white/25 bg-black/30 hover:bg-white/10 hover:border-white/40 text-white px-10 py-7 text-base rounded-full backdrop-blur-sm transition-all duration-500"
               >
                 Living Room
               </Button>
