@@ -32,7 +32,7 @@ export const Hero = () => {
       </motion.div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pb-20 md:pb-28 pt-32">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pb-16 md:pb-20 pt-32">
         <div className="max-w-4xl">
           {/* Label */}
           <motion.div
