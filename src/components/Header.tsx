@@ -118,10 +118,8 @@ export const Header = () => {
       </div>
 
       {/* Main Header */}
-      <div className={`bg-background transition-all duration-300 ${
-        scrolled ? 'shadow-elevated' : 'shadow-sm'
-      }`}>
-        <div className="border-b border-border/30">
+      <div className="bg-background shadow-sm">
+        <div className="border-b border-border/40">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-20">
               {/* Mobile Menu Button */}
@@ -169,8 +167,16 @@ export const Header = () => {
                 ))}
               </nav>
 
-              {/* Actions */}
-              <div className="flex items-center gap-1">
+              {/* Actions with separator */}
+              <div className="flex items-center gap-2">
+                <div className="hidden lg:block h-8 w-px bg-border/50" />
+                
+                <Link to="/products">
+                  <Button className="hidden xl:flex bg-accent hover:bg-accent/90 text-white font-semibold rounded-full px-6">
+                    Shop Now
+                  </Button>
+                </Link>
+                
                 <Button 
                   variant="ghost" 
                   size="icon" 
@@ -223,7 +229,7 @@ export const Header = () => {
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       </div>
 
-      {/* Mega Menu */}
+      {/* Mega Menu - Pure White Professional */}
       <AnimatePresence>
         {megaMenuOpen && (
           <motion.div
@@ -231,81 +237,103 @@ export const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-0 right-0 bg-background/98 backdrop-blur-xl shadow-elevated border-b border-border"
+            className="absolute left-0 right-0 bg-white shadow-2xl border-b border-gray-100"
             onMouseLeave={() => setMegaMenuOpen(false)}
           >
-            <div className="container mx-auto px-4 py-10">
-              <div className="grid grid-cols-3 gap-8">
+            <div className="container mx-auto px-4 py-12">
+              <div className="grid grid-cols-4 gap-6">
                 {catalogCategories.map((category, idx) => (
                   <div key={idx} className="group">
-                    <div className="relative overflow-hidden rounded-xl mb-4">
+                    <div className="relative overflow-hidden rounded-lg mb-4">
                       <img 
                         src={category.image} 
                         alt={category.title}
-                        className="w-full h-40 object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="w-full h-36 object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                      <div className="absolute bottom-3 left-4 text-white font-display font-semibold text-lg">
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute bottom-3 left-4 text-white font-display font-bold text-lg">
                         {category.title}
                       </div>
                     </div>
-                    <ul className="space-y-2.5">
+                    <ul className="space-y-3">
                       {category.items.map((item, itemIdx) => (
                         <li key={itemIdx}>
                           <Link
                             to={item.href}
-                            className="text-sm text-foreground/70 hover:text-accent transition-colors duration-200 flex items-center justify-between group/link"
+                            className="text-sm text-gray-600 hover:text-amber-700 transition-colors duration-200 flex items-center justify-between group/link"
                           >
                             <span>{item.name}</span>
-                            <span className="opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all duration-200 text-accent">→</span>
+                            <span className="opacity-0 -translate-x-2 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all duration-200 text-amber-700">→</span>
                           </Link>
                         </li>
                       ))}
                     </ul>
                     <Link
                       to={`/products?category=${category.title}`}
-                      className="inline-flex items-center gap-1 mt-4 text-sm font-semibold text-accent hover:text-accent/80 transition-colors"
+                      className="inline-flex items-center gap-1 mt-4 text-sm font-semibold text-amber-700 hover:text-amber-800 transition-colors"
                     >
-                      View All {category.title}
-                      <ChevronDown className="h-4 w-4 -rotate-90" />
+                      View All
+                      <ChevronDown className="h-3.5 w-3.5 -rotate-90" />
                     </Link>
                   </div>
                 ))}
                 
-                {/* Featured Column */}
-                <div className="bg-gradient-to-br from-accent/5 to-accent/10 rounded-2xl p-6 border border-accent/10">
-                  <h4 className="font-display font-semibold text-lg mb-4">Featured Collection</h4>
+                {/* Featured Column - Premium Card */}
+                <div className="bg-gradient-to-b from-amber-50 to-white rounded-2xl p-5 border border-amber-100 shadow-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Featured</span>
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  </div>
+                  <h4 className="font-display font-bold text-lg text-gray-900 mb-3">New Arrivals</h4>
                   <div className="relative rounded-xl overflow-hidden mb-4">
                     <img 
                       src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=250&fit=crop" 
                       alt="Featured"
-                      className="w-full h-32 object-cover"
+                      className="w-full h-28 object-cover"
                     />
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">New Arrivals</span>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    <div className="absolute bottom-2 left-3">
+                      <span className="text-white text-xs font-semibold">Spring Collection 2026</span>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">Discover our latest curated selection of premium furniture.</p>
-                  <Button className="w-full bg-accent hover:bg-accent/90">
+                  <p className="text-xs text-gray-500 mb-4 line-clamp-2">Discover our latest curated selection of premium furniture for modern living.</p>
+                  <Button className="w-full bg-amber-700 hover:bg-amber-800 text-white font-semibold text-sm py-2.5 rounded-xl">
                     Shop Now
                   </Button>
                 </div>
               </div>
               
-              {/* Bottom Promo */}
-              <div className="mt-8 pt-6 border-t border-border/50 flex items-center justify-between">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    In Stock & Ready to Ship
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-accent rounded-full"></span>
-                    White Glove Delivery Available
-                  </span>
+              {/* Bottom Promo - Clean & Professional */}
+              <div className="mt-10 pt-6 border-t border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-8">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-gray-600">In Stock & Ready to Ship</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-gray-600">Free White Glove Delivery</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <span className="text-sm text-gray-600">10-Year Warranty</span>
+                  </div>
                 </div>
-                <Link to="/products" className="text-sm font-semibold text-accent hover:text-accent/80">
-                  Browse Full Catalog →
+                <Link to="/products" className="text-sm font-semibold text-amber-700 hover:text-amber-800 flex items-center gap-1">
+                  Browse Full Catalog 
+                  <ChevronDown className="h-4 w-4 -rotate-90" />
                 </Link>
               </div>
             </div>
