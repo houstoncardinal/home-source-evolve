@@ -12,16 +12,20 @@ export const Hero = () => {
   return (
     <section className="relative min-h-[100vh] flex items-end overflow-hidden bg-background" aria-label="Hero section">
       {/* Parallax Layers */}
-      <motion.div className="absolute inset-0 z-0" style={{ y: ySlow }}>
+      <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
           alt="Luxury modern living room with sophisticated furniture"
-          className="w-full h-[110%] object-cover scale-[1.04]"
+          className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
-      </motion.div>
-      <motion.div
-        className="absolute inset-0 z-0 pointer-events-none"
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
+      </div>
+      
+      {/* Additional bottom overlay to ensure full coverage */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-[5] pointer-events-none" />
+      
+      <motion.div 
+        className="absolute inset-0 z-0 pointer-events-none" 
         style={{ y: yFast }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.55 }}

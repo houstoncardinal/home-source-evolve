@@ -10,7 +10,7 @@ const badges = [
 
 export const TrustBadges = () => {
   return (
-    <section className="bg-gradient-to-r from-primary via-primary/95 to-primary text-primary-foreground border-b border-white/5 shadow-2xl -mt-px">
+    <section className="py-6 bg-gradient-to-r from-primary via-primary/95 to-primary text-primary-foreground border-b border-white/5 shadow-2xl -mt-px">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0 }}
