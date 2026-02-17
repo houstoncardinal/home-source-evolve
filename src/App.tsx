@@ -15,6 +15,8 @@ const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const Cart = lazy(() => import("./pages/Cart"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const SpaceAnalyzer = lazy(() => import("./pages/SpaceAnalyzer"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Admin pages (split for smaller initial bundle)
@@ -48,6 +50,8 @@ const router = createBrowserRouter(
         { path: "/cart", element: <Cart /> },
         { path: "/checkout", element: <Checkout /> },
         { path: "/space-analyzer", element: <SpaceAnalyzer /> },
+        { path: "/about", element: <About /> },
+        { path: "/contact", element: <Contact /> },
 
         // Admin
         { path: "/admin/login", element: <AdminLogin /> },
