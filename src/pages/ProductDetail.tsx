@@ -17,7 +17,7 @@ type ProductImage = Pick<Database["public"]["Tables"]["product_images"]["Row"], 
 type ProductColor = Database["public"]["Tables"]["product_colors"]["Row"];
 type ProductTexture = Database["public"]["Tables"]["product_textures"]["Row"];
 type ProductVariation = Database["public"]["Tables"]["product_variations"]["Row"];
-type ProductFeature = Pick<Database["public"]["Tables"]["product_features"]["Row"], "feature" | "display_order">;
+type ProductFeature = Pick<Database["public"]["Tables"]["product_features"]["Row"], "feature">;
 
 type Dimensions = {
   width?: string;

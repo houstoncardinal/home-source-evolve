@@ -82,9 +82,9 @@ export default function AdminProducts() {
     try {
       let query = supabase
         .from("products")
-        .select("*, product_images(url, is_primary)", { count: "exact" })
+        .select("*, product_images(url, is_primary)")
         .order("created_at", { ascending: false })
-        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1, { count: "exact" });
 
       if (categoryFilter !== "All") {
         query = query.eq("category", categoryFilter);

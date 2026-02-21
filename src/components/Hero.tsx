@@ -1,47 +1,52 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight, Minus } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import heroImage from "@/assets/hero-living-room.jpg";
 
 export const Hero = () => {
   const { scrollY } = useScroll();
-  const yImage = useTransform(scrollY, [0, 500], [0, -60]);
-  const opacityOverlay = useTransform(scrollY, [0, 300], [0.55, 0.8]);
+  const ySlow = useTransform(scrollY, [0, 400], [0, -40]);
+  const yFast = useTransform(scrollY, [0, 400], [0, -90]);
 
   return (
-    <section
-      className="relative min-h-[92vh] sm:min-h-screen flex items-center overflow-hidden bg-background"
-      aria-label="Hero section"
-    >
-      {/* Parallax Image */}
-      <motion.div className="absolute inset-0 z-0" style={{ y: yImage }}>
+    <section className="relative min-h-[100vh] flex items-end overflow-hidden bg-background" aria-label="Hero section">
+      {/* Parallax Layers */}
+      <div className="absolute inset-0 z-0">
         <img
           src={heroImage}
           alt="Luxury modern living room with sophisticated furniture"
-          className="w-full h-full object-cover scale-110"
-          fetchPriority="high"
+          className="w-full h-full object-cover"
         />
-        <motion.div
-          className="absolute inset-0 bg-foreground"
-          style={{ opacity: opacityOverlay }}
-        />
-        {/* Warm gradient at bottom */}
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/40 to-foreground/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30" />
+      </div>
+      
+      {/* Additional bottom overlay to ensure full coverage */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-[5] pointer-events-none" />
+      
+      <motion.div 
+        className="absolute inset-0 z-0 pointer-events-none" 
+        style={{ y: yFast }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.55 }}
+        transition={{ duration: 1.2 }}
+      >
+        <div className="absolute -left-24 top-10 w-[520px] h-[520px] bg-accent/25 blur-3xl rounded-full" />
+        <div className="absolute right-[-180px] bottom-0 w-[420px] h-[420px] bg-white/10 blur-3xl rounded-full" />
       </motion.div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pt-32 pb-20 md:pt-40 md:pb-28">
-        <div className="max-w-3xl">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pb-16 md:pb-20 pt-32">
+        <div className="max-w-4xl">
           {/* Label */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex items-center gap-3 mb-7"
+            className="flex items-center gap-3 mb-8"
           >
-            <div className="h-px w-8 bg-accent" />
-            <span className="text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
+            <Minus className="h-4 w-8 text-accent" />
+            <span className="text-xs font-semibold uppercase tracking-[0.25em] text-white/70">
               Premium Furniture Collection
             </span>
           </motion.div>
@@ -51,90 +56,86 @@ export const Hero = () => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white mb-6 leading-[1.05] tracking-[-0.02em]"
+            className="text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem] font-display font-bold text-white mb-8 leading-[1.02] tracking-[-0.02em]"
           >
             Furniture Built
             <br />
-            <span className="text-accent">for Living Well</span>
+            for Living Well
           </motion.h1>
 
           {/* Subheading */}
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="text-base sm:text-lg text-white/65 mb-10 leading-relaxed max-w-lg font-light"
+            className="text-lg md:text-xl text-white/65 mb-12 leading-relaxed max-w-xl font-light"
           >
             Handpicked sofas, beds, dining sets and more from Happy Homes Industries.
             Quality craftsmanship delivered to your door.
           </motion.p>
 
-          {/* CTAs */}
+          {/* CTA */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.8 }}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
+            className="flex flex-col sm:flex-row items-start gap-4"
           >
-            <Link to="/products" className="sm:w-auto">
+            <Link to="/products">
               <Button
                 size="lg"
-                className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-white font-semibold px-8 py-6 text-base rounded-full group shadow-lg hover:shadow-xl transition-all duration-400 btn-shimmer"
+                className="bg-accent hover:bg-accent/90 text-white font-semibold px-10 py-7 text-base rounded-full group shadow-lg hover:shadow-xl transition-all duration-500 btn-shimmer"
               >
                 Shop Collection
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
               </Button>
             </Link>
-            <Link to="/products?category=Living Room" className="sm:w-auto">
+            <Link to="/products?category=Living Room">
               <Button
                 size="lg"
-                variant="outline"
-                className="w-full sm:w-auto border-white/30 bg-white/10 hover:bg-white/20 text-white px-8 py-6 text-base rounded-full backdrop-blur-sm transition-all duration-400 hover:border-white/50"
+                className="border border-white/25 bg-black/30 hover:bg-white/10 hover:border-white/40 text-white px-10 py-7 text-base rounded-full backdrop-blur-sm transition-all duration-500"
               >
                 Living Room
               </Button>
             </Link>
           </motion.div>
 
-          {/* Stats */}
+          {/* Stats Bar */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 1.1 }}
-            className="flex gap-8 sm:gap-14 mt-16 pt-8 border-t border-white/15"
+            className="flex gap-10 sm:gap-16 mt-20 pt-8 border-t border-white/15"
           >
             {[
               { value: "500+", label: "Products" },
               { value: "15K+", label: "Customers" },
-              { value: "4.9★", label: "Rating" },
+              { value: "4.9", label: "Rating" },
             ].map((stat, index) => (
               <div key={index}>
-                <div className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-white mb-0.5">
-                  {stat.value}
-                </div>
-                <div className="text-[10px] sm:text-xs text-white/45 font-medium uppercase tracking-wider">
-                  {stat.label}
-                </div>
+                <div className="text-2xl md:text-3xl font-display font-bold text-white mb-0.5">{stat.value}</div>
+                <div className="text-xs text-white/45 font-medium uppercase tracking-wider">{stat.label}</div>
               </div>
             ))}
           </motion.div>
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* Scroll line */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center gap-2"
+        transition={{ delay: 1.4 }}
+        className="absolute bottom-8 right-8 z-10 hidden md:flex flex-col items-center gap-3"
       >
-        <span className="text-[10px] text-white/40 uppercase tracking-[0.3em]">Scroll</span>
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <ChevronDown className="h-5 w-5 text-white/40" />
-        </motion.div>
+        <span className="text-[10px] text-white/40 uppercase tracking-[0.3em] [writing-mode:vertical-lr]">Scroll</span>
+        <div className="w-px h-12 bg-gradient-to-b from-white/40 to-transparent relative overflow-hidden">
+          <motion.div
+            className="w-full h-4 bg-accent"
+            animate={{ y: [-16, 48] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
       </motion.div>
     </section>
   );
