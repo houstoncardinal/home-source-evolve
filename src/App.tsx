@@ -28,6 +28,7 @@ const AdminCustomers = lazy(() => import("./pages/admin/AdminCustomers"));
 const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminCompetitivePricing = lazy(() => import("./pages/admin/AdminCompetitivePricing"));
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const router = createBrowserRouter(
         { path: "/admin/analytics", element: <AdminAnalytics /> },
         { path: "/admin/categories", element: <AdminCategories /> },
         { path: "/admin/settings", element: <AdminSettings /> },
+        { path: "/admin/competitive-pricing", element: <AdminCompetitivePricing /> },
 
         { path: "*", element: <NotFound /> },
       ],

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Package,
@@ -445,8 +446,51 @@ export default function AdminDashboard() {
               ))}
             </CardContent>
           </Card>
+
+          {/* Competitive Pricing Widget */}
+          <CompetitivePricingWidget />
         </div>
       </div>
     </AdminLayout>
+  );
+}
+
+function CompetitivePricingWidget() {
+  const [recentScans, setRecentScans] = useState<any[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("competitor_scans")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(3)
+      .then(({ data }) => setRecentScans(data || []));
+  }, []);
+
+  return (
+    <Card className="border-slate-200">
+      <CardHeader className="flex items-center justify-between">
+        <CardTitle className="text-lg text-slate-900 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-amber-600" />
+          Competitive Pricing
+        </CardTitle>
+        <Link to="/admin/competitive-pricing" className="text-sm text-blue-600 hover:underline">View All</Link>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {recentScans.length === 0 && <p className="text-slate-500 text-sm">No scans yet. <Link to="/admin/competitive-pricing" className="text-amber-600 hover:underline">Run your first scan</Link></p>}
+        {recentScans.map((scan) => (
+          <div key={scan.id} className="flex items-center justify-between rounded-lg border border-slate-200 p-3">
+            <div>
+              <p className="font-semibold text-slate-900">{scan.competitor_name}</p>
+              <p className="text-xs text-slate-500">{new Date(scan.created_at).toLocaleDateString()}</p>
+            </div>
+            <div className="flex gap-2">
+              <Badge variant="outline">{scan.total_products_found} products</Badge>
+              <Badge variant="outline" className="border-emerald-300 text-emerald-600">{scan.matches_found} matches</Badge>
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }

@@ -11,6 +11,7 @@ import {
   ChevronRight,
   BarChart3,
   Tags,
+  Crosshair,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -24,6 +25,7 @@ const navItems = [
   { label: "Customers", href: "/admin/customers", icon: Users },
   { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Categories", href: "/admin/categories", icon: Tags },
+  { label: "Competitive Pricing", href: "/admin/competitive-pricing", icon: Crosshair },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
