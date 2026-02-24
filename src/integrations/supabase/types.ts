@@ -14,6 +14,218 @@ export type Database = {
   }
   public: {
     Tables: {
+      competitor_products: {
+        Row: {
+          competitor_name: string
+          competitor_price: number
+          competitor_product_name: string
+          competitor_url: string | null
+          created_at: string
+          id: string
+          our_price: number | null
+          price_difference: number | null
+          price_difference_pct: number | null
+          product_id: string | null
+          recommendation: string | null
+          scan_id: string | null
+        }
+        Insert: {
+          competitor_name?: string
+          competitor_price: number
+          competitor_product_name: string
+          competitor_url?: string | null
+          created_at?: string
+          id?: string
+          our_price?: number | null
+          price_difference?: number | null
+          price_difference_pct?: number | null
+          product_id?: string | null
+          recommendation?: string | null
+          scan_id?: string | null
+        }
+        Update: {
+          competitor_name?: string
+          competitor_price?: number
+          competitor_product_name?: string
+          competitor_url?: string | null
+          created_at?: string
+          id?: string
+          our_price?: number | null
+          price_difference?: number | null
+          price_difference_pct?: number | null
+          product_id?: string | null
+          recommendation?: string | null
+          scan_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_products_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competitor_products_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "competitor_scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitor_scans: {
+        Row: {
+          competitor_name: string
+          competitor_url: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          matches_found: number | null
+          status: string
+          total_products_found: number | null
+        }
+        Insert: {
+          competitor_name?: string
+          competitor_url: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          matches_found?: number | null
+          status?: string
+          total_products_found?: number | null
+        }
+        Update: {
+          competitor_name?: string
+          competitor_url?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          matches_found?: number | null
+          status?: string
+          total_products_found?: number | null
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          notes: string | null
+          phone: string | null
+          state: string | null
+          total_orders: number | null
+          total_spent: number | null
+          updated_at: string
+          zip_code: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          notes?: string | null
+          phone?: string | null
+          state?: string | null
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          billing_address: Json | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          items: Json | null
+          notes: string | null
+          order_number: string
+          shipping: number | null
+          shipping_address: Json | null
+          status: string
+          subtotal: number | null
+          tax: number | null
+          total: number
+          tracking_number: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_address?: Json | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          items?: Json | null
+          notes?: string | null
+          order_number: string
+          shipping?: number | null
+          shipping_address?: Json | null
+          status?: string
+          subtotal?: number | null
+          tax?: number | null
+          total?: number
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_address?: Json | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          items?: Json | null
+          notes?: string | null
+          order_number?: string
+          shipping?: number | null
+          shipping_address?: Json | null
+          status?: string
+          subtotal?: number | null
+          tax?: number | null
+          total?: number
+          tracking_number?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_colors: {
         Row: {
           created_at: string
@@ -285,6 +497,30 @@ export type Database = {
           subcategory?: string | null
           updated_at?: string
           weight?: number | null
+        }
+        Relationships: []
+      }
+      store_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
         }
         Relationships: []
       }
