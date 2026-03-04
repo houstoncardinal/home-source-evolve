@@ -18,7 +18,7 @@ const trustIndicators = [
 
 const Index = () => {
   return (
-    <div className="min-h-screen pb-20 lg:pb-0 bg-background relative overflow-hidden">
+    <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Ambient background effects */}
       <div className="pointer-events-none absolute inset-0 opacity-60">
         <div className="absolute -left-20 top-0 w-96 h-96 bg-accent/10 blur-3xl rounded-full" />

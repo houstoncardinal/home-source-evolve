@@ -6,7 +6,6 @@ import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { CartProvider } from "./contexts/CartContext";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
-import { MobileToolbar } from "./components/MobileToolbar";
 import { ScrollToTop } from "./components/ScrollToTop";
 
 const Index = lazy(() => import("./pages/Index"));
@@ -36,7 +35,6 @@ const Shell = () => (
   <>
     <ScrollToTop />
     <Outlet />
-    <MobileToolbar />
   </>
 );
 
