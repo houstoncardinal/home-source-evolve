@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { AdminSidebar } from "./AdminSidebar";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,12 +30,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   if (loading || !roleChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#080a12]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20 animate-pulse">
-            <Loader2 className="h-6 w-6 animate-spin text-white" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-xl shadow-amber-500/20 animate-pulse">
+            <Loader2 className="h-7 w-7 animate-spin text-white" />
           </div>
-          <p className="text-sm text-slate-500 font-medium">Loading dashboard...</p>
+          <p className="text-sm text-muted-foreground font-medium">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -47,16 +47,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#080a12]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center max-w-md px-6">
-          <div className="w-16 h-16 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-            <span className="text-3xl">🚫</span>
+          <div className="w-20 h-20 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert className="h-10 w-10 text-destructive" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
-          <p className="text-slate-400 mb-6">You don't have admin privileges. Contact an administrator to request access.</p>
+          <h1 className="text-2xl font-display font-bold text-foreground mb-2">Access Denied</h1>
+          <p className="text-muted-foreground mb-6">You don't have admin privileges. Contact an administrator to request access.</p>
           <button
             onClick={() => supabase.auth.signOut()}
-            className="text-amber-400 hover:text-amber-300 text-sm font-medium"
+            className="text-accent hover:text-accent/80 text-sm font-semibold transition-colors"
           >
             Sign out and try a different account
           </button>
@@ -66,10 +66,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#080a12]">
+    <div className="min-h-screen bg-[hsl(40,18%,97%)]">
       <AdminSidebar />
-      <main className="lg:ml-[260px] min-h-screen transition-all duration-300">
-        <div className="p-4 lg:p-8">
+      <main className="lg:ml-[264px] min-h-screen transition-all duration-300">
+        <div className="p-5 lg:p-8 max-w-[1440px]">
           {children}
         </div>
       </main>
