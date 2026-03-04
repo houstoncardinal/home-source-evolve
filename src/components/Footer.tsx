@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Facebook, Instagram, Twitter, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const footerLinks = {
   shop: [
@@ -13,26 +16,51 @@ const footerLinks = {
     { name: "Accessories", href: "/products?category=Accessories" },
   ],
   company: [
-    { name: "Our Story", href: "#about" },
-    { name: "Sustainability", href: "#sustainability" },
-    { name: "Careers", href: "#careers" },
-    { name: "Press", href: "#press" },
+    { name: "Our Story", href: "/about" },
+    { name: "Contact Us", href: "/contact" },
+    { name: "Space Analyzer", href: "/space-analyzer" },
   ],
   support: [
-    { name: "Shipping & Returns", href: "#shipping" },
-    { name: "Care Guide", href: "#care" },
-    { name: "FAQ", href: "#faq" },
-    { name: "Contact Us", href: "#contact" },
+    { name: "Shipping & Returns", href: "/terms" },
+    { name: "FAQ", href: "/contact" },
+    { name: "Contact Us", href: "/contact" },
+    { name: "Privacy Policy", href: "/privacy" },
+    { name: "Terms of Service", href: "/terms" },
   ],
 };
 
 export const Footer = () => {
+  const [email, setEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSubscribing(true);
+    try {
+      const { error } = await supabase.from("newsletter_subscribers").insert({ email: email.trim() });
+      if (error) {
+        if (error.code === "23505") {
+          toast.info("You're already subscribed!");
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success("Thanks for subscribing!");
+        setEmail("");
+      }
+    } catch {
+      toast.error("Something went wrong. Try again.");
+    }
+    setSubscribing(false);
+  };
+
   return (
     <footer className="bg-primary text-primary-foreground pt-16 pb-10 relative overflow-hidden">
       <div className="absolute inset-0 opacity-[0.06] bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_32%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.16),transparent_34%)]" />
       <div className="container mx-auto px-4 relative">
         {/* Newsletter Bar */}
-        <div className="py-10 border border-primary-foreground/10 rounded-2xl px-6 md:px-10 bg-primary/60 backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.6)]">
+        <form onSubmit={handleSubscribe} className="py-10 border border-primary-foreground/10 rounded-2xl px-6 md:px-10 bg-primary/60 backdrop-blur-sm flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_20px_60px_-50px_rgba(0,0,0,0.6)]">
           <div>
             <p className="text-[11px] uppercase tracking-[0.24em] text-primary-foreground/60 mb-2">Join the list</p>
             <h3 className="font-display text-2xl font-semibold mb-1">Design dispatches and private offers</h3>
@@ -42,14 +70,21 @@ export const Footer = () => {
             <Input
               type="email"
               placeholder="Your email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="bg-primary-foreground/5 border-primary-foreground/15 text-primary-foreground placeholder:text-primary-foreground/30 focus:border-accent w-full md:w-72"
             />
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium px-6 shrink-0 rounded-full">
-              Subscribe
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button
+              type="submit"
+              disabled={subscribing}
+              className="bg-accent hover:bg-accent/90 text-accent-foreground font-medium px-6 shrink-0 rounded-full"
+            >
+              {subscribing ? "..." : "Subscribe"}
+              {!subscribing && <ArrowRight className="ml-2 h-4 w-4" />}
             </Button>
           </div>
-        </div>
+        </form>
 
         {/* Links Grid */}
         <div className="py-16 grid grid-cols-2 md:grid-cols-4 gap-12">
@@ -79,10 +114,7 @@ export const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.shop.map((link) => (
                 <li key={link.name}>
-                  <Link
-                    to={link.href}
-                    className="text-primary-foreground/55 hover:text-primary-foreground transition-colors duration-300 text-sm font-light"
-                  >
+                  <Link to={link.href} className="text-primary-foreground/55 hover:text-primary-foreground transition-colors duration-300 text-sm font-light">
                     {link.name}
                   </Link>
                 </li>
@@ -95,12 +127,9 @@ export const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-primary-foreground/55 hover:text-primary-foreground transition-colors duration-300 text-sm font-light"
-                  >
+                  <Link to={link.href} className="text-primary-foreground/55 hover:text-primary-foreground transition-colors duration-300 text-sm font-light">
                     {link.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -111,12 +140,9 @@ export const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.support.map((link) => (
                 <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-primary-foreground/55 hover:text-primary-foreground transition-colors duration-300 text-sm font-light"
-                  >
+                  <Link to={link.href} className="text-primary-foreground/55 hover:text-primary-foreground transition-colors duration-300 text-sm font-light">
                     {link.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -127,12 +153,12 @@ export const Footer = () => {
         <div className="pt-6 border-t border-primary-foreground/10 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-primary-foreground/50">
           <p>&copy; {new Date().getFullYear()} Curated Home Source. All rights reserved.</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-primary-foreground transition-colors">
+            <Link to="/privacy" className="hover:text-primary-foreground transition-colors">
               Privacy Policy
-            </a>
-            <a href="#" className="hover:text-primary-foreground transition-colors">
+            </Link>
+            <Link to="/terms" className="hover:text-primary-foreground transition-colors">
               Terms of Service
-            </a>
+            </Link>
           </div>
         </div>
       </div>

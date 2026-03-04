@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { CartProvider } from "./contexts/CartContext";
+import { WishlistProvider } from "./contexts/WishlistContext";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 
@@ -16,9 +17,11 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const SpaceAnalyzer = lazy(() => import("./pages/SpaceAnalyzer"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Admin pages (split for smaller initial bundle)
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
@@ -51,6 +54,9 @@ const router = createBrowserRouter(
         { path: "/space-analyzer", element: <SpaceAnalyzer /> },
         { path: "/about", element: <About /> },
         { path: "/contact", element: <Contact /> },
+        { path: "/wishlist", element: <Wishlist /> },
+        { path: "/privacy", element: <PrivacyPolicy /> },
+        { path: "/terms", element: <TermsOfService /> },
 
         // Admin
         { path: "/admin/login", element: <AdminLogin /> },
@@ -79,11 +85,13 @@ const App = () => (
     <TooltipProvider>
       <AdminAuthProvider>
         <CartProvider>
-          <Toaster />
-          <Sonner />
-          <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>}>
-            <RouterProvider router={router} />
-          </Suspense>
+          <WishlistProvider>
+            <Toaster />
+            <Sonner />
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>}>
+              <RouterProvider router={router} />
+            </Suspense>
+          </WishlistProvider>
         </CartProvider>
       </AdminAuthProvider>
     </TooltipProvider>
