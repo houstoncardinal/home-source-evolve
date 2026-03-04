@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Store, Loader2 } from "lucide-react";
+import { Store, Loader2, Code2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [devLoading, setDevLoading] = useState(false);
   const { signIn, signUp, user } = useAdminAuth();
   const navigate = useNavigate();
 
@@ -42,6 +44,48 @@ export default function AdminLogin() {
         navigate("/admin");
       }
     }
+  };
+
+  const handleDevBypass = async () => {
+    setDevLoading(true);
+    const devEmail = "dev@curatedhomesource.com";
+    const devPassword = "dev-admin-2026!";
+
+    // Try signing in first
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: devEmail,
+      password: devPassword,
+    });
+
+    if (signInError) {
+      // If sign in fails, create the account then sign in
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: devEmail,
+        password: devPassword,
+      });
+
+      if (signUpError) {
+        toast.error("Dev bypass failed: " + signUpError.message);
+        setDevLoading(false);
+        return;
+      }
+
+      // Try signing in again after signup
+      const { error: retryError } = await supabase.auth.signInWithPassword({
+        email: devEmail,
+        password: devPassword,
+      });
+
+      if (retryError) {
+        toast.error("Dev account created but sign-in failed. Try again or check email confirmation settings.");
+        setDevLoading(false);
+        return;
+      }
+    }
+
+    toast.success("Dev mode activated!");
+    setDevLoading(false);
+    navigate("/admin");
   };
 
   return (
@@ -96,6 +140,31 @@ export default function AdminLogin() {
               {isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>
+
+          <div className="mt-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-700" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-slate-800/80 px-2 text-slate-500">or</span>
+              </div>
+            </div>
+            <Button
+              onClick={handleDevBypass}
+              disabled={devLoading}
+              variant="outline"
+              className="w-full mt-4 border-emerald-600/40 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/60"
+            >
+              {devLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Code2 className="h-4 w-4 mr-2" />
+              )}
+              Dev Bypass — Quick Access
+            </Button>
+          </div>
+
           <div className="mt-6 text-center">
             <button
               onClick={() => setIsSignUp(!isSignUp)}
