@@ -4,6 +4,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
+import { SearchDialog } from "@/components/SearchDialog";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Mega menu categories
@@ -58,8 +60,10 @@ export const Header = () => {
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const megaMenuRef = useRef<HTMLDivElement>(null);
   const { totalItems } = useCart();
+  const { totalItems: wishlistCount } = useWishlist();
   const location = useLocation();
 
   useEffect(() => {
@@ -182,29 +186,26 @@ export const Header = () => {
                   size="icon" 
                   className="rounded-full hover:bg-muted text-foreground/70 hover:text-foreground"
                   aria-label="Search products"
+                  onClick={() => setSearchOpen(true)}
                 >
                   <Search className="h-5 w-5" />
                 </Button>
                 
-                <Link to="/profile">
+                <Link to="/wishlist">
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="rounded-full hover:bg-muted text-foreground/70 hover:text-foreground"
-                    aria-label="Profile"
+                    className="relative rounded-full hover:bg-muted text-foreground/70 hover:text-foreground"
+                    aria-label="Wishlist"
                   >
-                    <User className="h-5 w-5" />
+                    <Heart className="h-5 w-5" />
+                    {wishlistCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white border-2 border-background shadow-md">
+                        {wishlistCount}
+                      </Badge>
+                    )}
                   </Button>
                 </Link>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="rounded-full hover:bg-muted text-foreground/70 hover:text-foreground"
-                  aria-label="Wishlist"
-                >
-                  <Heart className="h-5 w-5" />
-                </Button>
 
                 <Link to="/cart" aria-label={`Shopping cart with ${totalItems} items`}>
                   <Button 
@@ -403,6 +404,7 @@ export const Header = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </motion.header>
   );
 };

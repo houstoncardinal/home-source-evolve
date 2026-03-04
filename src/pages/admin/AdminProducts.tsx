@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useState } from "react";
+import { ProductImageUpload } from "@/components/admin/ProductImageUpload";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,16 @@ export default function AdminProducts() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [productImages, setProductImages] = useState<{ id: string; url: string; is_primary: boolean; display_order: number }[]>([]);
 
+  const fetchProductImages = async (productId: string) => {
+    const { data } = await supabase
+      .from("product_images")
+      .select("id, url, is_primary, display_order")
+      .eq("product_id", productId)
+      .order("display_order");
+    setProductImages(data || []);
+  };
   useEffect(() => {
     fetchProducts();
   }, [page, categoryFilter, stockFilter]);
@@ -425,6 +435,7 @@ export default function AdminProducts() {
                               size="icon"
                               onClick={() => {
                                 setEditingProduct(product);
+                                fetchProductImages(product.id);
                                 setShowEditDialog(true);
                               }}
                               className="h-8 w-8"
@@ -598,6 +609,18 @@ export default function AdminProducts() {
                     }
                   />
                 </div>
+
+                {/* Image Upload */}
+                {editingProduct?.id && (
+                  <ProductImageUpload
+                    productId={editingProduct.id}
+                    images={productImages}
+                    onImagesChange={() => {
+                      fetchProductImages(editingProduct.id);
+                      fetchProducts();
+                    }}
+                  />
+                )}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Badge</Label>

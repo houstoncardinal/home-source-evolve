@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -13,11 +13,9 @@ import {
   Crosshair,
   ChevronLeft,
   ChevronRight,
-  Bell,
-  Search,
-  Moon,
-  Sun,
   ExternalLink,
+  Menu,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -63,13 +61,19 @@ export function AdminSidebar() {
   const location = useLocation();
   const { signOut, user } = useAdminAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
 
   const isActive = (href: string) => {
     if (href === "/admin") return location.pathname === "/admin";
     return location.pathname.startsWith(href);
   };
 
-  return (
+  const sidebarContent = (
     <aside
       className={cn(
         "fixed left-0 top-0 h-screen flex flex-col transition-all duration-300 z-50 border-r",
@@ -181,5 +185,32 @@ export function AdminSidebar() {
         </div>
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="fixed top-4 left-4 z-[60] lg:hidden p-2 rounded-lg bg-[#0c0f1a] border border-[#1e2235] text-white shadow-lg"
+        aria-label="Toggle menu"
+      >
+        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Desktop: always visible */}
+      <div className="hidden lg:block">{sidebarContent}</div>
+
+      {/* Mobile: slide in */}
+      {mobileOpen && <div className="lg:hidden">{sidebarContent}</div>}
+    </>
   );
 }

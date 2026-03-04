@@ -1,11 +1,14 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { SEOHead } from "@/components/SEOHead";
 import { motion } from "framer-motion";
 import { Phone, Mail, MapPin, Clock, MessageCircle, Send, HeadphonesIcon, Truck, Award } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const contactInfo = [
   {
@@ -67,14 +70,31 @@ const Contact = () => {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    setSubmitted(true);
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from("contact_submissions").insert({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || "",
+        subject: formData.subject,
+        message: formData.message,
+      });
+      if (error) throw error;
+      setSubmitted(true);
+      toast.success("Message sent successfully!");
+    } catch {
+      toast.error("Failed to send message. Please try again.");
+    }
+    setSubmitting(false);
   };
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title="Contact Us" description="Get in touch with Curated Home Source. Schedule a design consultation, ask about delivery, or request a quote." />
       <Header />
       
       {/* Hero Section */}
@@ -220,10 +240,11 @@ const Contact = () => {
                   </div>
                   <Button 
                     type="submit" 
+                    disabled={submitting}
                     className="w-full h-14 bg-accent hover:bg-accent/90 text-white font-semibold rounded-full text-lg"
                   >
-                    Send Message
-                    <Send className="ml-2 h-5 w-5" />
+                    {submitting ? "Sending..." : "Send Message"}
+                    {!submitting && <Send className="ml-2 h-5 w-5" />}
                   </Button>
                 </form>
               )}
