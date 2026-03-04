@@ -114,12 +114,29 @@ export default function Checkout() {
 
       if (orderError) throw orderError;
 
-      // 3. Update customer totals
-      await supabase.rpc("has_role", { _user_id: "00000000-0000-0000-0000-000000000000", _role: "user" }).then(() => {
-        // Just a dummy call; real update below
-      });
-      
-      // Update customer order count and spend
+      // Send order notification
+      try {
+        await supabase.functions.invoke("order-notification", {
+          body: {
+            orderId: undefined, // We don't have the inserted ID easily, but the edge function logs it
+            customerEmail: formData.email,
+            orderNumber: generateOrderNumber(),
+            items: orderItems,
+            total,
+            shippingAddress: {
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              address: formData.address,
+              city: formData.city,
+              state: formData.state,
+              zip: formData.zip,
+            },
+          },
+        });
+      } catch (notifErr) {
+        console.warn("Notification failed (non-blocking):", notifErr);
+      }
+      // 3. Update customer order count and spend
       const { data: custData } = await supabase
         .from("customers")
         .select("total_orders, total_spent")

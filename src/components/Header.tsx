@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { Menu, Search, ShoppingCart, X, User, Heart, ChevronDown, Phone, Mail, MapPin } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Menu, Search, ShoppingCart, X, User, Heart, ChevronDown, Phone, Mail, MapPin, LogOut } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { SearchDialog } from "@/components/SearchDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Mega menu categories
@@ -64,7 +66,9 @@ export const Header = () => {
   const megaMenuRef = useRef<HTMLDivElement>(null);
   const { totalItems } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
+  const { user, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -171,12 +175,12 @@ export const Header = () => {
                 ))}
               </nav>
 
-              {/* Actions with separator */}
+              {/* Actions */}
               <div className="flex items-center gap-2">
                 <div className="hidden lg:block h-8 w-px bg-border/50" />
                 
                 <Link to="/products">
-                  <Button className="hidden xl:flex bg-accent hover:bg-accent/90 text-white font-semibold rounded-full px-6">
+                  <Button className="hidden xl:flex bg-accent hover:bg-accent/90 text-accent-foreground font-semibold rounded-full px-6">
                     Shop Now
                   </Button>
                 </Link>
@@ -190,6 +194,37 @@ export const Header = () => {
                 >
                   <Search className="h-5 w-5" />
                 </Button>
+
+                {/* User Account */}
+                {user ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted text-foreground/70 hover:text-foreground" aria-label="Account">
+                        <User className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <div className="px-3 py-2">
+                        <p className="text-sm font-medium truncate">{user.user_metadata?.first_name || user.email}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate("/account")}>
+                        <User className="h-4 w-4 mr-2" />My Account
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={async () => { await signOut(); navigate("/"); }}>
+                        <LogOut className="h-4 w-4 mr-2" />Sign Out
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Link to="/login">
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted text-foreground/70 hover:text-foreground" aria-label="Sign in">
+                      <User className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                )}
                 
                 <Link to="/wishlist">
                   <Button 
@@ -200,7 +235,7 @@ export const Header = () => {
                   >
                     <Heart className="h-5 w-5" />
                     {wishlistCount > 0 && (
-                      <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white border-2 border-background shadow-md">
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground border-2 border-background shadow-md">
                         {wishlistCount}
                       </Badge>
                     )}
@@ -215,7 +250,7 @@ export const Header = () => {
                   >
                     <ShoppingCart className="h-5 w-5" />
                     {totalItems > 0 && (
-                      <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-accent text-white border-2 border-background shadow-md">
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-accent text-accent-foreground border-2 border-background shadow-md">
                         {totalItems}
                       </Badge>
                     )}
@@ -380,14 +415,29 @@ export const Header = () => {
               {/* Mobile Actions */}
               <div className="pt-4 mt-4 border-t border-border space-y-3">
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" size="lg">
-                    <User className="mr-2 h-4 w-4" />
-                    Sign In
-                  </Button>
-                  <Button className="flex-1 bg-accent hover:bg-accent/90" size="lg">
-                    <Heart className="mr-2 h-4 w-4" />
-                    Wishlist
-                  </Button>
+                  {user ? (
+                    <>
+                      <Link to="/account" className="flex-1">
+                        <Button variant="outline" className="w-full" size="lg">
+                          <User className="mr-2 h-4 w-4" />My Account
+                        </Button>
+                      </Link>
+                      <Button variant="outline" size="lg" onClick={async () => { await signOut(); navigate("/"); }}>
+                        <LogOut className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Link to="/login" className="flex-1">
+                      <Button variant="outline" className="w-full" size="lg">
+                        <User className="mr-2 h-4 w-4" />Sign In
+                      </Button>
+                    </Link>
+                  )}
+                  <Link to="/wishlist" className="flex-1">
+                    <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" size="lg">
+                      <Heart className="mr-2 h-4 w-4" />Wishlist
+                    </Button>
+                  </Link>
                 </div>
                 <div className="flex items-center justify-center gap-4 pt-2 text-sm text-muted-foreground">
                   <a href="tel:+18005551234" className="flex items-center gap-1.5">
