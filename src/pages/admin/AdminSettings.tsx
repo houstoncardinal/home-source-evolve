@@ -38,7 +38,7 @@ export default function AdminSettings() {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase.from("shop_settings").select("key, value");
+      const { data, error } = await supabase.from("store_settings").select("key, value");
       if (error) throw error;
 
       const settingsMap: Record<string, string> = {};
@@ -60,8 +60,8 @@ export default function AdminSettings() {
       for (const [key, value] of Object.entries(settings)) {
         const jsonValue = isNaN(Number(value)) ? JSON.stringify(value) : Number(value);
         const { error } = await supabase
-          .from("shop_settings")
-          .upsert({ key, value: jsonValue as any }, { onConflict: "key" });
+          .from("store_settings")
+          .upsert({ key, value: String(jsonValue) }, { onConflict: "key" });
         if (error) throw error;
       }
       toast.success("Settings saved");
