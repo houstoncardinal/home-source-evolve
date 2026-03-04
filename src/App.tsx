@@ -7,6 +7,7 @@ import { Suspense, lazy } from "react";
 import { CartProvider } from "./contexts/CartContext";
 import { WishlistProvider } from "./contexts/WishlistContext";
 import { AdminAuthProvider } from "./contexts/AdminAuthContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import { ScrollToTop } from "./components/ScrollToTop";
 
 const Index = lazy(() => import("./pages/Index"));
@@ -21,6 +22,12 @@ const Wishlist = lazy(() => import("./pages/Wishlist"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Account = lazy(() => import("./pages/Account"));
 
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -58,6 +65,13 @@ const router = createBrowserRouter(
         { path: "/privacy", element: <PrivacyPolicy /> },
         { path: "/terms", element: <TermsOfService /> },
 
+        // Customer auth
+        { path: "/login", element: <Login /> },
+        { path: "/signup", element: <Signup /> },
+        { path: "/forgot-password", element: <ForgotPassword /> },
+        { path: "/reset-password", element: <ResetPassword /> },
+        { path: "/account", element: <Account /> },
+
         // Admin
         { path: "/admin/login", element: <AdminLogin /> },
         { path: "/admin", element: <AdminDashboard /> },
@@ -83,17 +97,19 @@ const router = createBrowserRouter(
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AdminAuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <Toaster />
-            <Sonner />
-            <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>}>
-              <RouterProvider router={router} />
-            </Suspense>
-          </WishlistProvider>
-        </CartProvider>
-      </AdminAuthProvider>
+      <AuthProvider>
+        <AdminAuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <Toaster />
+              <Sonner />
+              <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>}>
+                <RouterProvider router={router} />
+              </Suspense>
+            </WishlistProvider>
+          </CartProvider>
+        </AdminAuthProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

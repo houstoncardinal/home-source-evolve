@@ -221,6 +221,47 @@ export type Database = {
         }
         Relationships: []
       }
+      order_notifications: {
+        Row: {
+          created_at: string
+          customer_email: string
+          id: string
+          metadata: Json | null
+          notification_type: string
+          order_id: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          order_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          id?: string
+          metadata?: Json | null
+          notification_type?: string
+          order_id?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_notifications_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           billing_address: Json | null
