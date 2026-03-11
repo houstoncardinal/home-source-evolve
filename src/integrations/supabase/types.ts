@@ -14,6 +14,262 @@ export type Database = {
   }
   public: {
     Tables: {
+      market_scan_sessions: {
+        Row: {
+          id: string
+          status: string
+          total_products: number
+          scanned_products: number
+          failed_products: number
+          triggered_by: string
+          started_at: string | null
+          completed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          status?: string
+          total_products?: number
+          scanned_products?: number
+          failed_products?: number
+          triggered_by?: string
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          status?: string
+          total_products?: number
+          scanned_products?: number
+          failed_products?: number
+          triggered_by?: string
+          started_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      product_market_data: {
+        Row: {
+          id: string
+          session_id: string
+          product_id: string
+          source_name: string
+          source_url: string
+          matched_product_name: string
+          price: number
+          currency: string
+          search_query_used: string | null
+          confidence_score: number | null
+          raw_data: Json
+          scraped_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          product_id: string
+          source_name: string
+          source_url?: string
+          matched_product_name?: string
+          price: number
+          currency?: string
+          search_query_used?: string | null
+          confidence_score?: number | null
+          raw_data?: Json
+          scraped_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          product_id?: string
+          source_name?: string
+          source_url?: string
+          matched_product_name?: string
+          price?: number
+          currency?: string
+          search_query_used?: string | null
+          confidence_score?: number | null
+          raw_data?: Json
+          scraped_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_market_data_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "market_scan_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_market_data_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_pricing_ranges: {
+        Row: {
+          id: string
+          product_id: string
+          market_min: number | null
+          market_max: number | null
+          market_avg: number | null
+          market_median: number | null
+          sources_count: number
+          data_points_count: number
+          last_scanned_at: string | null
+          last_session_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          market_min?: number | null
+          market_max?: number | null
+          market_avg?: number | null
+          market_median?: number | null
+          sources_count?: number
+          data_points_count?: number
+          last_scanned_at?: string | null
+          last_session_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          market_min?: number | null
+          market_max?: number | null
+          market_avg?: number | null
+          market_median?: number | null
+          sources_count?: number
+          data_points_count?: number
+          last_scanned_at?: string | null
+          last_session_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_pricing_ranges_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pricing_rules: {
+        Row: {
+          id: string
+          name: string
+          strategy: string
+          description: string
+          multiplier: number
+          floor_pct: number
+          ceiling_source: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          strategy: string
+          description?: string
+          multiplier?: number
+          floor_pct?: number
+          ceiling_source?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          strategy?: string
+          description?: string
+          multiplier?: number
+          floor_pct?: number
+          ceiling_source?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_logs: {
+        Row: {
+          id: string
+          product_id: string
+          product_name: string
+          strategy: string
+          old_price: number
+          suggested_price: number
+          applied_price: number | null
+          market_avg: number | null
+          market_min: number | null
+          market_max: number | null
+          was_applied: boolean
+          dry_run: boolean
+          floor_enforced: boolean
+          ceiling_enforced: boolean
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          product_name?: string
+          strategy: string
+          old_price: number
+          suggested_price: number
+          applied_price?: number | null
+          market_avg?: number | null
+          market_min?: number | null
+          market_max?: number | null
+          was_applied?: boolean
+          dry_run?: boolean
+          floor_enforced?: boolean
+          ceiling_enforced?: boolean
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          product_name?: string
+          strategy?: string
+          old_price?: number
+          suggested_price?: number
+          applied_price?: number | null
+          market_avg?: number | null
+          market_min?: number | null
+          market_max?: number | null
+          was_applied?: boolean
+          dry_run?: boolean
+          floor_enforced?: boolean
+          ceiling_enforced?: boolean
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_logs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitor_products: {
         Row: {
           competitor_name: string
