@@ -64,6 +64,7 @@ export const Header = () => {
   const [mobileCatalogOpen, setMobileCatalogOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const megaMenuRef = useRef<HTMLDivElement>(null);
+  const megaMenuDropdownRef = useRef<HTMLDivElement>(null);
   const { totalItems } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
   const { user, signOut } = useAuth();
@@ -80,7 +81,10 @@ export const Header = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (megaMenuRef.current && !megaMenuRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const inTrigger = megaMenuRef.current?.contains(target);
+      const inDropdown = megaMenuDropdownRef.current?.contains(target);
+      if (!inTrigger && !inDropdown) {
         setMegaMenuOpen(false);
       }
     };
@@ -273,6 +277,7 @@ export const Header = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
+            ref={megaMenuDropdownRef}
             className="absolute left-0 right-0 bg-white shadow-xl border-b border-gray-100"
             onMouseLeave={() => setMegaMenuOpen(false)}
           >
