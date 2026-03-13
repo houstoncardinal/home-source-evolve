@@ -16,7 +16,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
 
 const BASE_URL = 'https://www.happyhomesindustries.com';
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://rymeisumjtkuorrkdirb.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://owtcangfdcfltjjfsrnv.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 if (!SERVICE_KEY) {
