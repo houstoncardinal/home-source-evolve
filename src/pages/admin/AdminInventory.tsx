@@ -64,7 +64,7 @@ export default function AdminInventory() {
 
   const handleBulkSave = async () => {
     setSaving(true);
-    const updates: Promise<any>[] = [];
+    const updates: Array<Promise<any>> = [];
 
     for (const [id, qty] of Object.entries(editedQuantities)) {
       const num = parseInt(qty);
