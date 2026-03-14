@@ -70,7 +70,7 @@ export default function AdminInventory() {
       const num = parseInt(qty);
       if (!isNaN(num)) {
         updates.push(
-          supabase.from("products").update({ stock_quantity: num, in_stock: num > 0 }).eq("id", id).then()
+          supabase.from("products").update({ stock_quantity: num, in_stock: num > 0 }).eq("id", id) as unknown as Promise<any>
         );
       }
     }
