@@ -38,6 +38,9 @@ const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
 const AdminCategories = lazy(() => import("./pages/admin/AdminCategories"));
 const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminCompetitivePricing = lazy(() => import("./pages/admin/AdminCompetitivePricing"));
+const AdminInventory = lazy(() => import("./pages/admin/AdminInventory"));
+const AdminPromotions = lazy(() => import("./pages/admin/AdminPromotions"));
+const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 
 const queryClient = new QueryClient();
 
