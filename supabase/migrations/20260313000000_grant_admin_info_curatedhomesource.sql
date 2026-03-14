@@ -1,4 +1,4 @@
--- Grant admin role to info@curatedhomesource (UID: 24b56d6f-a6cd-44b0-8fe5-dd937bcff66b)
+-- Grant admin role to info@curatedhomesource (UID: e8960e1a-85cf-49fc-ab5c-227731651da4)
 INSERT INTO public.user_roles (user_id, role)
-VALUES ('24b56d6f-a6cd-44b0-8fe5-dd937bcff66b', 'admin')
+VALUES ('e8960e1a-85cf-49fc-ab5c-227731651da4', 'admin')
 ON CONFLICT (user_id, role) DO NOTHING;
