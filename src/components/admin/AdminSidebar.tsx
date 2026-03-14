@@ -36,6 +36,7 @@ const navSections = [
     items: [
       { label: "Products", href: "/admin/products", icon: Package },
       { label: "Categories", href: "/admin/categories", icon: Tags },
+      { label: "Inventory", href: "/admin/inventory", icon: Crosshair },
     ],
   },
   {
@@ -43,12 +44,14 @@ const navSections = [
     items: [
       { label: "Orders", href: "/admin/orders", icon: ShoppingCart },
       { label: "Customers", href: "/admin/customers", icon: Users },
+      { label: "Promotions", href: "/admin/promotions", icon: Tags },
     ],
   },
   {
     label: "Intelligence",
     items: [
       { label: "Price Scanner", href: "/admin/competitive-pricing", icon: Crosshair },
+      { label: "Reports", href: "/admin/reports", icon: BarChart3 },
     ],
   },
   {

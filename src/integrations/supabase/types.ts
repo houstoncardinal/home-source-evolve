@@ -140,6 +140,60 @@ export type Database = {
         }
         Relationships: []
       }
+      coupons: {
+        Row: {
+          applies_to: string | null
+          category_filter: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          minimum_order: number | null
+          starts_at: string | null
+          updated_at: string | null
+          used_count: number | null
+        }
+        Insert: {
+          applies_to?: string | null
+          category_filter?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          minimum_order?: number | null
+          starts_at?: string | null
+          updated_at?: string | null
+          used_count?: number | null
+        }
+        Update: {
+          applies_to?: string | null
+          category_filter?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          minimum_order?: number | null
+          starts_at?: string | null
+          updated_at?: string | null
+          used_count?: number | null
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address_line1: string | null
@@ -542,6 +596,7 @@ export type Database = {
           long_description: string | null
           name: string
           price: number
+          reorder_point: number | null
           shipping_info: string | null
           sku: string | null
           slug: string
@@ -565,6 +620,7 @@ export type Database = {
           long_description?: string | null
           name: string
           price: number
+          reorder_point?: number | null
           shipping_info?: string | null
           sku?: string | null
           slug: string
@@ -588,6 +644,7 @@ export type Database = {
           long_description?: string | null
           name?: string
           price?: number
+          reorder_point?: number | null
           shipping_info?: string | null
           sku?: string | null
           slug?: string
