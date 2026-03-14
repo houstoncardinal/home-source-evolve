@@ -85,6 +85,9 @@ const router = createBrowserRouter(
         { path: "/admin/categories", element: <AdminCategories /> },
         { path: "/admin/settings", element: <AdminSettings /> },
         { path: "/admin/competitive-pricing", element: <AdminCompetitivePricing /> },
+        { path: "/admin/inventory", element: <AdminInventory /> },
+        { path: "/admin/promotions", element: <AdminPromotions /> },
+        { path: "/admin/reports", element: <AdminReports /> },
 
         { path: "*", element: <NotFound /> },
       ],

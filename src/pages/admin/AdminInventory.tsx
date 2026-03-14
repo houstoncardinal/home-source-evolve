@@ -78,7 +78,7 @@ export default function AdminInventory() {
       const num = parseInt(rp);
       if (!isNaN(num)) {
         updates.push(
-          supabase.from("products").update({ reorder_point: num } as any).eq("id", id).then()
+          supabase.from("products").update({ reorder_point: num } as any).eq("id", id) as unknown as Promise<any>
         );
       }
     }
