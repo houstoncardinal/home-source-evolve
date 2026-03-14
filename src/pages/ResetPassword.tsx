@@ -17,11 +17,15 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [valid, setValid] = useState(false);
+  const [isInvite, setIsInvite] = useState(false);
 
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
+    const params = new URLSearchParams(hash.replace("#", "?"));
+    const type = params.get("type");
+    if (type === "recovery" || type === "invite") {
       setValid(true);
+      setIsInvite(type === "invite");
     }
   }, []);
 
@@ -40,7 +44,7 @@ export default function ResetPassword() {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Password updated!", description: "You can now sign in with your new password." });
+      toast({ title: isInvite ? "Welcome! Password set." : "Password updated!", description: "You can now sign in with your new password." });
       navigate("/login");
     }
     setLoading(false);
@@ -69,8 +73,8 @@ export default function ResetPassword() {
         <section className="container mx-auto px-4 py-16 max-w-md">
           <Card className="p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-display font-bold mb-2">New Password</h1>
-              <p className="text-muted-foreground">Enter your new password below</p>
+              <h1 className="text-3xl font-display font-bold mb-2">{isInvite ? "Welcome! Set Your Password" : "New Password"}</h1>
+              <p className="text-muted-foreground">{isInvite ? "Create a password to activate your account" : "Enter your new password below"}</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -88,7 +92,7 @@ export default function ResetPassword() {
                 </div>
               </div>
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Updating...</> : "Update Password"}
+                {loading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />{isInvite ? "Activating..." : "Updating..."}</> : isInvite ? "Activate Account" : "Update Password"}
               </Button>
             </form>
           </Card>
