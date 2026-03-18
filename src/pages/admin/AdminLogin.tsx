@@ -38,22 +38,14 @@ export default function AdminLogin() {
     }
   };
 
-  const handleDevBypass = async () => {
-    setDevLoading(true);
-    const devEmail = "dev@curatedhomesource.com";
-    const devPassword = "dev-admin-2026!";
-
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: devEmail, password: devPassword });
-    if (signInError) {
-      const { error: signUpError } = await supabase.auth.signUp({ email: devEmail, password: devPassword });
-      if (signUpError) { toast.error("Dev bypass failed: " + signUpError.message); setDevLoading(false); return; }
-      const { error: retryError } = await supabase.auth.signInWithPassword({ email: devEmail, password: devPassword });
-      if (retryError) { toast.error("Dev account created but sign-in failed. Try again."); setDevLoading(false); return; }
-    }
-    toast.success("Dev mode activated!");
-    setDevLoading(false);
-    navigate("/admin");
-  };
+  // Clear any stale sessions on mount
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error || (session && !session.user)) {
+        supabase.auth.signOut();
+      }
+    });
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[hsl(40,18%,97%)] p-4">
