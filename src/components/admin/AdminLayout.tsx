@@ -18,11 +18,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     if (!user) { setRoleChecked(true); return; }
     
     const checkRole = async () => {
-      const { data } = await supabase.rpc("has_role", {
-        _user_id: user.id,
-        _role: "admin",
-      });
-      setIsAdmin(!!data);
+      try {
+        const { data, error } = await supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "admin",
+        });
+        if (error) {
+          console.error("Role check failed:", error);
+          // Session might be stale, sign out
+          await supabase.auth.signOut();
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(!!data);
+        }
+      } catch (err) {
+        console.error("Role check error:", err);
+        setIsAdmin(false);
+      }
       setRoleChecked(true);
     };
     checkRole();

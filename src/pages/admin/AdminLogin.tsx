@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Store, Loader2, Code2, Lock, Mail } from "lucide-react";
+import { Store, Loader2, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,7 +14,6 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [devLoading, setDevLoading] = useState(false);
   const { signIn, signUp, user } = useAdminAuth();
   const navigate = useNavigate();
 
@@ -38,22 +37,14 @@ export default function AdminLogin() {
     }
   };
 
-  const handleDevBypass = async () => {
-    setDevLoading(true);
-    const devEmail = "dev@curatedhomesource.com";
-    const devPassword = "dev-admin-2026!";
-
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: devEmail, password: devPassword });
-    if (signInError) {
-      const { error: signUpError } = await supabase.auth.signUp({ email: devEmail, password: devPassword });
-      if (signUpError) { toast.error("Dev bypass failed: " + signUpError.message); setDevLoading(false); return; }
-      const { error: retryError } = await supabase.auth.signInWithPassword({ email: devEmail, password: devPassword });
-      if (retryError) { toast.error("Dev account created but sign-in failed. Try again."); setDevLoading(false); return; }
-    }
-    toast.success("Dev mode activated!");
-    setDevLoading(false);
-    navigate("/admin");
-  };
+  // Clear any stale sessions on mount
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error || (session && !session.user)) {
+        supabase.auth.signOut();
+      }
+    });
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[hsl(40,18%,97%)] p-4">
@@ -97,16 +88,6 @@ export default function AdminLogin() {
             </Button>
           </form>
 
-          <div className="mt-5">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/40" /></div>
-              <div className="relative flex justify-center text-xs"><span className="bg-white/80 px-3 text-muted-foreground">or</span></div>
-            </div>
-            <Button onClick={handleDevBypass} disabled={devLoading} variant="outline" className="w-full mt-4 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 font-semibold">
-              {devLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Code2 className="h-4 w-4 mr-2" />}
-              Dev Bypass — Quick Access
-            </Button>
-          </div>
 
           <div className="mt-6 text-center">
             <button onClick={() => setIsSignUp(!isSignUp)} className="text-sm text-accent hover:text-accent/80 font-semibold transition-colors">
