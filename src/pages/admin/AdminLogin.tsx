@@ -88,16 +88,6 @@ export default function AdminLogin() {
             </Button>
           </form>
 
-          <div className="mt-5">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/40" /></div>
-              <div className="relative flex justify-center text-xs"><span className="bg-white/80 px-3 text-muted-foreground">or</span></div>
-            </div>
-            <Button onClick={handleDevBypass} disabled={devLoading} variant="outline" className="w-full mt-4 border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 font-semibold">
-              {devLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Code2 className="h-4 w-4 mr-2" />}
-              Dev Bypass — Quick Access
-            </Button>
-          </div>
 
           <div className="mt-6 text-center">
             <button onClick={() => setIsSignUp(!isSignUp)} className="text-sm text-accent hover:text-accent/80 font-semibold transition-colors">
