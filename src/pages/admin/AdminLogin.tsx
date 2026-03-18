@@ -14,7 +14,6 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [devLoading, setDevLoading] = useState(false);
   const { signIn, signUp, user } = useAdminAuth();
   const navigate = useNavigate();
 
