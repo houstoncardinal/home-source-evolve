@@ -161,17 +161,23 @@ async function scrapeBatch(cats: typeof CATEGORIES): Promise<Product[]> {
 }
 
 async function syncImagesForProducts(supabase: any, products: Product[]) {
-  const slugs = products.map((p) => generateSlug(p.name, p.storeId));
+  const storeIds = Array.from(new Set(products.map((p) => p.storeId).filter(Boolean)));
   const { data: existingProducts, error: productLookupError } = await supabase
     .from("products")
-    .select("id, slug")
-    .in("slug", slugs);
+    .select("id, slug");
 
   if (productLookupError) throw productLookupError;
 
-  const slugMap = new Map((existingProducts || []).map((item: { id: string; slug: string }) => [item.slug, item.id]));
+  const byStoreId = new Map<string, { id: string; slug: string }>();
+  for (const item of existingProducts || []) {
+    const matchedStoreId = storeIds.find((storeId) => item.slug?.endsWith(`-${storeId}`));
+    if (matchedStoreId && !byStoreId.has(matchedStoreId)) {
+      byStoreId.set(matchedStoreId, item);
+    }
+  }
+
   const matched = products
-    .map((product) => ({ ...product, productId: slugMap.get(generateSlug(product.name, product.storeId)) }))
+    .map((product) => ({ ...product, productId: byStoreId.get(product.storeId)?.id }))
     .filter((product): product is Product & { productId: string } => Boolean(product.productId));
 
   if (matched.length === 0) {
