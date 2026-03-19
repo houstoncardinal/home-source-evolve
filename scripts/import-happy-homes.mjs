@@ -178,6 +178,65 @@ async function fetchPage(url) {
   }
 }
 
+function ensureAbsoluteUrl(url) {
+  if (!url) return '';
+  return url.startsWith('http') ? url : `${BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+function getFileExtension(url, contentType) {
+  const cleanUrl = (url || '').toLowerCase().split('?')[0];
+  const byUrl = cleanUrl.match(/\.([a-z0-9]{3,4})$/)?.[1];
+  if (byUrl && ['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'].includes(byUrl)) return byUrl;
+
+  const type = (contentType || '').toLowerCase();
+  if (type.includes('png')) return 'png';
+  if (type.includes('webp')) return 'webp';
+  if (type.includes('gif')) return 'gif';
+  if (type.includes('avif')) return 'avif';
+  return 'jpg';
+}
+
+async function mirrorImageToStorage(sourceUrl, storeId, slot = 1) {
+  const absoluteUrl = ensureAbsoluteUrl(sourceUrl);
+  if (!absoluteUrl) return '';
+
+  try {
+    const response = await fetch(absoluteUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; CatalogImporter/1.0)',
+        'Accept': 'image/*,*/*;q=0.8',
+      }
+    });
+
+    if (!response.ok) {
+      console.error(`    Failed to fetch image ${absoluteUrl}: ${response.status}`);
+      return absoluteUrl;
+    }
+
+    const contentType = response.headers.get('content-type');
+    const ext = getFileExtension(absoluteUrl, contentType);
+    const path = `catalog/${storeId}/primary-${slot}.${ext}`;
+    const bytes = Buffer.from(await response.arrayBuffer());
+
+    const { error: uploadError } = await supabase.storage.from('product-images').upload(path, bytes, {
+      upsert: true,
+      contentType: contentType || `image/${ext}`,
+      cacheControl: '31536000',
+    });
+
+    if (uploadError) {
+      console.error(`    Failed to upload ${path}: ${uploadError.message}`);
+      return absoluteUrl;
+    }
+
+    const { data } = supabase.storage.from('product-images').getPublicUrl(path);
+    return data.publicUrl;
+  } catch (err) {
+    console.error(`    Failed to mirror image ${absoluteUrl}: ${err.message}`);
+    return absoluteUrl;
+  }
+}
+
 async function fetchProductDetails(url) {
   try {
     const html = await fetchPage(url);
