@@ -452,30 +452,36 @@ async function main() {
 
       // Primary image
       if (p.image) {
-        images.push({
-          product_id: productId,
-          url: p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`,
-          alt_text: cleanName(p.name),
-          is_primary: true,
-          display_order: 1,
-        });
+        const mirroredPrimary = await mirrorImageToStorage(p.image, p.storeId, 1);
+        if (mirroredPrimary) {
+          images.push({
+            product_id: productId,
+            url: mirroredPrimary,
+            alt_text: cleanName(p.name),
+            is_primary: true,
+            display_order: 1,
+          });
+        }
       }
 
       // Additional images from detail page
       const details = productDetails[p.storeId];
       if (details?.additionalImages) {
-        details.additionalImages.slice(0, 5).forEach((imgUrl, idx) => {
+        for (const [idx, imgUrl] of details.additionalImages.slice(0, 5).entries()) {
           const fullUrl = imgUrl.startsWith('http') ? imgUrl : `${BASE_URL}${imgUrl}`;
           if (fullUrl !== (p.image.startsWith('http') ? p.image : `${BASE_URL}${p.image}`)) {
-            images.push({
-              product_id: productId,
-              url: fullUrl,
-              alt_text: `${cleanName(p.name)} - Image ${idx + 2}`,
-              is_primary: false,
-              display_order: idx + 2,
-            });
+            const mirroredUrl = await mirrorImageToStorage(fullUrl, p.storeId, idx + 2);
+            if (mirroredUrl) {
+              images.push({
+                product_id: productId,
+                url: mirroredUrl,
+                alt_text: `${cleanName(p.name)} - Image ${idx + 2}`,
+                is_primary: false,
+                display_order: idx + 2,
+              });
+            }
           }
-        });
+        }
       }
     }
 
