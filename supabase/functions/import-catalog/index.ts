@@ -130,20 +130,31 @@ interface Product {
 function parseProducts(html: string, category: string, subcategory: string | null): Product[] {
   const products: Product[] = [];
   const seen = new Set<string>();
-  const regex = /href="(?:https?:\/\/www\.happyhomesindustries\.com)?\/store\/(p\d+)\/([^"]+)\.html"/g;
+  const regex = /href="([^"]*\/store\/(p\d+)\/([^"]+)\.html)"/g;
   let m;
   while ((m = regex.exec(html)) !== null) {
-    const [, storeId, nameEnc] = m;
+    const [, href, storeId, nameEnc] = m;
+    if (!href.includes("happyhomesindustries.com") && !href.startsWith("/store/")) continue;
     if (seen.has(storeId)) continue;
     seen.add(storeId);
-    const name = decodeURIComponent(nameEnc).replace(/_/g, " ").replace(/%2C/g, ",").replace(/%26/g, "&").replace(/%2F/g, "/");
-    const ctx = html.substring(Math.max(0, m.index - 500), m.index + 500);
-    const imgM = ctx.match(/(?:src|data-src)="([^"]*\/uploads\/[^"]+)"/);
+
+    const name = decodeURIComponent(nameEnc)
+      .replace(/_/g, " ")
+      .replace(/%2C/g, ",")
+      .replace(/%26/g, "&")
+      .replace(/%2F/g, "/");
+
+    const ctx = html.substring(Math.max(0, m.index - 800), m.index + 800);
+    const imgM = ctx.match(/(?:src|data-src)="([^"]*\/uploads\/[^"]+)"/i);
     let img = imgM ? imgM[1].split("?")[0] : "";
     if (img && !img.startsWith("http")) img = `${BASE_URL}${img}`;
-    const nearby = html.substring(Math.max(0, m.index - 250), m.index + 250).toLowerCase();
+
+    const nearby = ctx.toLowerCase();
     const soldOut = nearby.includes("sold out") || nearby.includes("wsite-soldout");
-    if (name && img) products.push({ storeId, name, imageUrl: img, soldOut, category, subcategory });
+
+    if (name && img) {
+      products.push({ storeId, name, imageUrl: img, soldOut, category, subcategory });
+    }
   }
   return products;
 }
