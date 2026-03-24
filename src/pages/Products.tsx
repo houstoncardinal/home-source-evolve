@@ -56,7 +56,7 @@ export default function Products() {
   const { addItem } = useCart();
   const [searchParams] = useSearchParams();
 
-  const categories = ["All", "Living Room", "Dining Room", "Bedroom", "Office", "Accessories"];
+  const categories = ["All", "Living Room", "Bedroom", "Dining Room", "Mattresses", "Kids & Teens", "Office", "Patio", "Accessories"];
 
   useEffect(() => {
     const urlCategory = searchParams.get("category");
