@@ -83,12 +83,18 @@ async function fetchHTML(url: string): Promise<string | null> {
   }
 }
 
-async function mirrorImageToStorage(supabase: any, sourceUrl: string, storeId: string, slot: number): Promise<string> {
+async function mirrorImageToStorage(supabase: any, sourceUrl: string, storeId: string, slot: number, timeoutMs = 8000): Promise<string> {
   const absoluteUrl = ensureAbsoluteUrl(sourceUrl);
   if (!absoluteUrl) return "";
 
   try {
-    const response = await fetch(absoluteUrl, { headers: { "User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)" } });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const response = await fetch(absoluteUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)" },
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
     if (!response.ok) {
       console.error(`Failed to fetch image ${absoluteUrl}: ${response.status}`);
       return absoluteUrl;
@@ -264,12 +270,15 @@ Deno.serve(async (req) => {
     const scrapedProducts = await scrapeBatch(cats);
 
     if (mode === "repair-images") {
+      const batchLimit = body.limit || 5;
       const seen = new Set<string>();
-      const unique = scrapedProducts.filter((product) => {
-        if (seen.has(product.storeId)) return false;
-        seen.add(product.storeId);
-        return true;
-      });
+      const unique = scrapedProducts
+        .filter((product) => {
+          if (seen.has(product.storeId)) return false;
+          seen.add(product.storeId);
+          return true;
+        })
+        .slice(0, batchLimit);
       const result = await syncImagesForProducts(supabase, unique);
       return new Response(JSON.stringify({
         success: true,
