@@ -37,6 +37,7 @@ const itemVariants = {
 
 export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -60,18 +61,28 @@ export default function Products() {
 
   useEffect(() => {
     const urlCategory = searchParams.get("category");
-    if (urlCategory && categories.includes(urlCategory)) {
-      setSelectedCategory(urlCategory);
-    } else {
-      setSelectedCategory("All");
-    }
+    const urlSubcategory = searchParams.get("subcategory") || "";
+    const urlBrands = searchParams.getAll("brand").filter(Boolean);
+    const urlSearch = searchParams.get("q") ?? "";
+    const urlMinPrice = searchParams.get("minPrice") ?? "";
+    const urlMaxPrice = searchParams.get("maxPrice") ?? "";
+
+    setSelectedCategory(urlCategory && categories.includes(urlCategory) ? urlCategory : "All");
+    setSelectedSubcategory(urlSubcategory);
+    setSelectedBrands(urlBrands);
+    setSelectedBadges([]);
+    setSearch(urlSearch);
+    setPriceMin(urlMinPrice);
+    setPriceMax(urlMaxPrice);
+    setIncludeOutOfStock(false);
     setPage(0);
+    pageCache.current = {};
   }, [searchParams]);
 
   useEffect(() => {
     fetchPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, selectedCategory, sort, search, priceMin, priceMax, selectedBrands, selectedBadges, includeOutOfStock]);
+  }, [page, selectedCategory, selectedSubcategory, sort, search, priceMin, priceMax, selectedBrands, selectedBadges, includeOutOfStock]);
 
   useEffect(() => {
     // load filter facets once
@@ -101,6 +112,7 @@ export default function Products() {
       const applyFilters = (builder: any) => {
         if (!includeOutOfStock) builder = builder.eq("in_stock", true);
         if (selectedCategory !== "All") builder = builder.eq("category", selectedCategory);
+        if (selectedSubcategory) builder = builder.eq("subcategory", selectedSubcategory);
         if (search.trim()) builder = builder.ilike("name", `%${search.trim()}%`);
         if (priceMin) builder = builder.gte("price", Number(priceMin));
         if (priceMax) builder = builder.lte("price", Number(priceMax));
@@ -226,10 +238,12 @@ export default function Products() {
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground mb-2">Curated catalog</p>
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-foreground">
-                    {selectedCategory === "All" ? "All Products" : selectedCategory}
+                     {selectedSubcategory || (selectedCategory === "All" ? "All Products" : selectedCategory)}
                   </h1>
                   <p className="text-lg text-muted-foreground font-light max-w-xl mt-3">
-                    {selectedCategory === "All"
+                     {selectedSubcategory
+                       ? `Explore our curated ${selectedSubcategory.toLowerCase()} selection`
+                       : selectedCategory === "All"
                       ? "Browse our complete collection of premium furniture"
                       : `Explore our ${selectedCategory.toLowerCase()} collection`}
                   </p>
@@ -252,7 +266,7 @@ export default function Products() {
                     {categories.map((category) => (
                       <button
                         key={category}
-                        onClick={() => { setSelectedCategory(category); setPage(0); pageCache.current = {}; }}
+                        onClick={() => { setSelectedCategory(category); setSelectedSubcategory(""); setPage(0); pageCache.current = {}; }}
                         className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-all ${
                           selectedCategory === category
                             ? "bg-foreground text-background shadow"

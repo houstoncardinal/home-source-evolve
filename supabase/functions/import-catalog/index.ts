@@ -60,6 +60,19 @@ function ensureAbsoluteUrl(url: string): string {
   return url.startsWith("http") ? url : `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
+function isManagedStorageUrl(url: string): boolean {
+  return url.includes(`/storage/v1/object/public/${IMAGE_BUCKET}/`);
+}
+
+function extractStoreIdFromSlug(slug: string | null | undefined): string | null {
+  if (!slug) return null;
+  return slug.match(/-(p\d+)$/i)?.[1] ?? null;
+}
+
+function buildCategoryPageUrl(path: string, page: number): string {
+  return page === 1 ? `${BASE_URL}/${path}` : `${BASE_URL}/${path}?page=${page}`;
+}
+
 function getFileExtension(url: string, contentType: string | null): string {
   const normalizedUrl = url.toLowerCase();
   const cleanUrl = normalizedUrl.split("?")[0];
@@ -168,62 +181,135 @@ function parseProducts(html: string, category: string, subcategory: string | nul
 async function scrapeBatch(cats: typeof CATEGORIES): Promise<Product[]> {
   const allProducts: Product[] = [];
   for (const cat of cats) {
-    const html = await fetchHTML(`${BASE_URL}/${cat.path}`);
-    if (!html) continue;
-    const prods = parseProducts(html, cat.category, cat.subcategory);
-    allProducts.push(...prods);
-    console.log(`${cat.path}: ${prods.length} products`);
+    const seenInCategory = new Set<string>();
+    let categoryCount = 0;
+
+    for (let page = 1; page <= 10; page++) {
+      const html = await fetchHTML(buildCategoryPageUrl(cat.path, page));
+      if (!html) break;
+
+      const prods = parseProducts(html, cat.category, cat.subcategory).filter((product) => {
+        if (seenInCategory.has(product.storeId)) return false;
+        seenInCategory.add(product.storeId);
+        return true;
+      });
+
+      if (prods.length === 0 && page > 1) break;
+
+      allProducts.push(...prods);
+      categoryCount += prods.length;
+
+      const hasNextPage = html.includes(`page=${page + 1}`) || /Next\s*<\/a>/i.test(html);
+      if (!hasNextPage) break;
+    }
+
+    console.log(`${cat.path}: ${categoryCount} products`);
   }
   return allProducts;
 }
 
-async function syncImagesForProducts(supabase: any, products: Product[]) {
-  const storeIds = Array.from(new Set(products.map((p) => p.storeId).filter(Boolean)));
+async function syncImagesForProducts(
+  supabase: any,
+  products: Product[],
+  options: { limit?: number; productOffset?: number; replaceExisting?: boolean } = {},
+) {
+  const seenStoreIds = new Set<string>();
+  const dedupedProducts = products.filter((product) => {
+    if (!product.storeId || seenStoreIds.has(product.storeId)) return false;
+    seenStoreIds.add(product.storeId);
+    return true;
+  });
+
+  const storeIds = Array.from(new Set(dedupedProducts.map((p) => p.storeId).filter(Boolean)));
   const { data: existingProducts, error: productLookupError } = await supabase
     .from("products")
     .select("id, slug");
 
   if (productLookupError) throw productLookupError;
 
+  const storeIdSet = new Set(storeIds);
   const byStoreId = new Map<string, { id: string; slug: string }>();
   for (const item of existingProducts || []) {
-    const matchedStoreId = storeIds.find((storeId) => item.slug?.endsWith(`-${storeId}`));
-    if (matchedStoreId && !byStoreId.has(matchedStoreId)) {
-      byStoreId.set(matchedStoreId, item);
+    const extractedStoreId = extractStoreIdFromSlug(item.slug);
+    if (extractedStoreId && storeIdSet.has(extractedStoreId) && !byStoreId.has(extractedStoreId)) {
+      byStoreId.set(extractedStoreId, item);
     }
   }
 
-  const matched = products
+  const matched = dedupedProducts
     .map((product) => ({ ...product, productId: byStoreId.get(product.storeId)?.id }))
     .filter((product): product is Product & { productId: string } => Boolean(product.productId));
 
   if (matched.length === 0) {
-    return { matched_products: 0, images_inserted: 0 };
+    return {
+      matched_products: 0,
+      images_inserted: 0,
+      processed_products: 0,
+      next_product_offset: null,
+    };
   }
 
-  const productIds = matched.map((product) => product.productId);
-  const { error: deleteError } = await supabase.from("product_images").delete().in("product_id", productIds);
-  if (deleteError) throw deleteError;
+  const start = Math.max(0, options.productOffset ?? 0);
+  const limit = Math.max(1, options.limit ?? matched.length);
+  const chunk = matched.slice(start, start + limit);
 
-  const imageRows = [];
-  for (const product of matched) {
+  if (chunk.length === 0) {
+    return {
+      matched_products: matched.length,
+      images_inserted: 0,
+      processed_products: 0,
+      next_product_offset: null,
+    };
+  }
+
+  const productIds = chunk.map((product) => product.productId);
+  const { data: existingImages, error: existingImagesError } = await supabase
+    .from("product_images")
+    .select("id, product_id")
+    .in("product_id", productIds);
+
+  if (existingImagesError) throw existingImagesError;
+
+  const existingCountByProductId = new Map<string, number>();
+  for (const image of existingImages || []) {
+    existingCountByProductId.set(image.product_id, (existingCountByProductId.get(image.product_id) || 0) + 1);
+  }
+
+  let imagesInserted = 0;
+  for (const product of chunk) {
+    const existingCount = existingCountByProductId.get(product.productId) || 0;
+    if (!options.replaceExisting && existingCount > 0) continue;
+
     const mirroredUrl = await mirrorImageToStorage(supabase, product.imageUrl, product.storeId, 1);
-    if (!mirroredUrl) continue;
-    imageRows.push({
+    if (!mirroredUrl || !isManagedStorageUrl(mirroredUrl)) {
+      console.error(`Skipping ${product.storeId} because image mirroring did not return a managed storage URL`);
+      continue;
+    }
+
+    if (options.replaceExisting && existingCount > 0) {
+      const { error: deleteError } = await supabase.from("product_images").delete().eq("product_id", product.productId);
+      if (deleteError) throw deleteError;
+    }
+
+    const { error: insertError } = await supabase.from("product_images").insert({
       product_id: product.productId,
       url: mirroredUrl,
       alt_text: cleanName(product.name),
       is_primary: true,
       display_order: 1,
     });
-  }
-
-  if (imageRows.length > 0) {
-    const { error: insertError } = await supabase.from("product_images").insert(imageRows);
     if (insertError) throw insertError;
+    imagesInserted++;
   }
 
-  return { matched_products: matched.length, images_inserted: imageRows.length };
+  const nextProductOffset = start + chunk.length < matched.length ? start + chunk.length : null;
+
+  return {
+    matched_products: matched.length,
+    images_inserted: imagesInserted,
+    processed_products: chunk.length,
+    next_product_offset: nextProductOffset,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -270,22 +356,28 @@ Deno.serve(async (req) => {
     const scrapedProducts = await scrapeBatch(cats);
 
     if (mode === "repair-images") {
-      const batchLimit = body.limit || 5;
+      const batchLimit = Math.min(Math.max(Number(body.limit) || 12, 1), 25);
+      const productOffset = Math.max(Number(body.product_offset) || 0, 0);
       const seen = new Set<string>();
       const unique = scrapedProducts
         .filter((product) => {
           if (seen.has(product.storeId)) return false;
           seen.add(product.storeId);
           return true;
-        })
-        .slice(0, batchLimit);
-      const result = await syncImagesForProducts(supabase, unique);
+        });
+      const result = await syncImagesForProducts(supabase, unique, {
+        limit: batchLimit,
+        productOffset,
+        replaceExisting: false,
+      });
       return new Response(JSON.stringify({
         success: true,
         categories_processed: cats.map((c) => c.path),
+        total_candidates: unique.length,
+        product_offset: productOffset,
         ...result,
         batch_start: start,
-        next_batch: start + size < CATEGORIES.length ? start + size : null,
+        next_batch: result.next_product_offset === null && start + size < CATEGORIES.length ? start + size : null,
       }), { headers: hdr });
     }
 
@@ -332,7 +424,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const syncResult = await syncImagesForProducts(supabase, unique);
+    const syncResult = await syncImagesForProducts(supabase, unique, { replaceExisting: false });
 
     return new Response(JSON.stringify({
       success: true,
