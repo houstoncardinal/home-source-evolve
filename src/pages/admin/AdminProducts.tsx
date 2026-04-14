@@ -318,21 +318,34 @@ export default function AdminProducts() {
   // ---- Image Backfill ----
   const runImageBackfill = async () => {
     setBackfillRunning(true);
-    toast.info("Starting image backfill — this runs in small batches...");
+    toast.info("Starting full catalog image repair in safe batches...");
     let totalInserted = 0;
     try {
-      for (let batch = 0; batch < 20; batch++) {
-        // Process 2 categories at a time, 5 products per batch
-        const start = batch * 2;
-        if (start >= 20) break; // No more categories
+      let categoryStart = 0;
+      let productOffset = 0;
+
+      for (let iteration = 0; iteration < 200; iteration++) {
         const res = await supabase.functions.invoke("import-catalog", {
-          body: { mode: "repair-images", batch_start: start, batch_size: 2, limit: 5 },
+          body: { mode: "repair-images", batch_start: categoryStart, batch_size: 2, limit: 12, product_offset: productOffset },
         });
-        if (res.error) { console.error(res.error); break; }
-        const d = res.data;
+        if (res.error) throw res.error;
+
+        const d = res.data || {};
         totalInserted += d?.images_inserted || 0;
-        toast.info(`Batch ${batch + 1}: ${d?.images_inserted || 0} images added`);
-        if (d?.next_batch === null) break;
+        toast.info(`Repair batch ${iteration + 1}: ${d?.processed_products || 0} checked, ${d?.images_inserted || 0} repaired`);
+
+        if (typeof d?.next_product_offset === "number") {
+          productOffset = d.next_product_offset;
+          continue;
+        }
+
+        if (typeof d?.next_batch === "number") {
+          categoryStart = d.next_batch;
+          productOffset = 0;
+          continue;
+        }
+
+        break;
       }
       toast.success(`Image backfill complete! ${totalInserted} images added.`);
       fetchProducts();

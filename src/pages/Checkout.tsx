@@ -43,6 +43,8 @@ export default function Checkout() {
     setLoading(true);
 
     try {
+      const orderNumber = generateOrderNumber();
+
       // 1. Find or create customer
       const { data: existingCustomers } = await supabase
         .from("customers")
@@ -93,24 +95,28 @@ export default function Checkout() {
         image: item.image,
       }));
 
-      const { error: orderError } = await supabase.from("orders").insert({
-        order_number: generateOrderNumber(),
-        customer_id: customerId,
-        items: orderItems,
-        subtotal: totalPrice,
-        tax,
-        shipping: 0,
-        total,
-        status: "pending",
-        shipping_address: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          address: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zip: formData.zip,
-        },
-      });
+      const { data: createdOrder, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          order_number: orderNumber,
+          customer_id: customerId,
+          items: orderItems,
+          subtotal: totalPrice,
+          tax,
+          shipping: 0,
+          total,
+          status: "pending",
+          shipping_address: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zip: formData.zip,
+          },
+        })
+        .select("id, order_number")
+        .single();
 
       if (orderError) throw orderError;
 
@@ -118,9 +124,9 @@ export default function Checkout() {
       try {
         await supabase.functions.invoke("order-notification", {
           body: {
-            orderId: undefined, // We don't have the inserted ID easily, but the edge function logs it
+            orderId: createdOrder.id,
             customerEmail: formData.email,
-            orderNumber: generateOrderNumber(),
+            orderNumber: createdOrder.order_number,
             items: orderItems,
             total,
             shippingAddress: {
